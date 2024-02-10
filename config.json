@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Momen@@010",
+    "database": "ecommerce",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "Momen@@010",
+    "database": "ecommerce",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "Momen@@010",
+    "database": "ecommerce",
+    "host": "localhost",
+    "dialect": "mysql"
+  }
+}
