@@ -1,16 +1,16 @@
 const Order = require("../models/orderModel")
-const stripe = require('stripe')('sk_test_51OJxtRBGJH4aQ3XJX1eKpByaMvSAnsOmmAhKjcQmUqFE3XVFxZ9CQeqtcwazEzo26zY8Yf2qORGMtnIkLwz2Sefq00jBjanok7')
 const OrderState = require("../models/orderStateModel")
 const Cart = require("../models/cartModel")
 const OrderItem = require("../models/orderItemModel")
 const CartItem = require("../models/cartItemModel")
 const User = require("../models/userModel")
 const Product = require("../models/productModel")
-const { Op } = require('sequelize');
-
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
 const Payment = require("../models/paymentModel")
+
+const { Op } = require('sequelize');
+const sequelize = require("../sequelize")
 
 exports.getAllOrders = catchAsync(async (req, res, next) => {
   const orders = await Order.findAll()
@@ -45,41 +45,141 @@ exports.getOrder = catchAsync(async (req, res, next) => {
   })
 })
 
+exports.checkOut = catchAsync(async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const cart = await Cart.findOne({
+      where: { user_id: req.user },
+      include: User,
+      transaction, // Pass the transaction to all queries within this transaction block
+    });
+
+    const { method } = req.body;
+    if (!method) {
+      throw new appError("Payment method is required", 400);
+    }
+
+    const cartItems = await CartItem.findAll({
+      where: { cart_id: cart?.id },
+      include: [Product],
+      transaction,
+    });
+
+    if (!cart || cartItems.length === 0) {
+      throw new appError("The cart is empty or invalid", 400);
+    }
+
+    const order = await createOrder(req.user, cart, transaction);
+    const orderItems = await createOrderItems(order, cartItems, transaction);
+    const total = await calculateTotalCheckOut(orderItems);
+
+    // Update order total and fetch the updated order details
+    await updateOrder(order.id, total, transaction);
+    const updatedOrder = await Order.findByPk(order.id, { transaction });
+
+    await deleteCartItems(cartItems, transaction);
+    const orderState = await createOrderState(order.id, transaction);
+    const payment = await createPayment(method, order.id, req.user, transaction);
+
+    // If everything is successful, commit the transaction
+    await transaction.commit();
+
+    res.status(200).json({
+      status: "success",
+      data: { order, orderState },
+    });
+  } catch (error) {
+    // If any error occurs, rollback the transaction
+    await transaction.rollback();
+    next(error);
+  }
+});
+
+
 exports.updateOrder = catchAsync(async (req, res, next) => {
   // update each Model which need to be updated 
 })
 
 exports.deleteOrder = catchAsync(async (req, res, next) => {
-  let orderId = req.params.orderId
-  // delete Order 
-  await Order.destroy({
-    where: {
-      id: orderId
+  const orderId = req.params.orderId;
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Check if the order exists
+    const existingOrder = await Order.findByPk(orderId, { transaction });
+    if (!existingOrder) {
+      throw new appError("Order not found", 404);
     }
-  })
-  // delete orderState 
-  await OrderState.destroy({
-    where: {
-      order_id: orderId
+
+    // Check if orderState, payment, and orderItems exist (optional, depending on your business logic)
+    const existingOrderState = await OrderState.findOne({
+      where: { order_id: orderId },
+      transaction,
+    });
+
+    const existingPayment = await Payment.findOne({
+      where: { order_id: orderId },
+      transaction,
+    });
+
+    const existingOrderItems = await OrderItem.findAll({
+      where: { order_id: orderId },
+      transaction,
+    });
+
+    // Perform deletion only if all related entities exist
+    if (existingOrderState || existingPayment || existingOrderItems.length > 0) {
+      // delete Order
+      await Order.destroy({
+        where: {
+          id: orderId,
+        },
+        transaction,
+      });
+
+      // delete orderState
+      await OrderState.destroy({
+        where: {
+          order_id: orderId,
+        },
+        transaction,
+      });
+
+      // delete payment
+      await Payment.destroy({
+        where: {
+          order_id: orderId,
+        },
+        transaction,
+      });
+
+      // delete orderItems
+      await OrderItem.destroy({
+        where: {
+          order_id: orderId,
+        },
+        transaction,
+      });
+
+      // Commit the transaction if all deletions are successful
+      await transaction.commit();
+
+      res.status(200).json({
+        status: "success",
+        message: "deleted successfully",
+      });
+    } else {
+      // Rollback the transaction if any related entity is not found
+      await transaction.rollback();
+      throw new appError("Order or related entities not found", 404);
     }
-  })
-  // delete payment 
-  await Payment.destroy({
-    where: {
-      order_id: orderId
-    }
-  })
-  // delete orderItems 
-  await OrderItem.destroy({
-    where: {
-      order_id: orderId
-    }
-  })
-  res.status(200).json({
-    status: "success",
-    message: "deleted successfully"
-  })
-})
+  } catch (error) {
+    // If any error occurs, rollback the transaction
+    await transaction.rollback();
+    next(error);
+  }
+});
 
 
 exports.getOrderState = catchAsync(async (req, res, next) => {
@@ -125,65 +225,6 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
     data: orders
   })
 })
-
-exports.checkOut = catchAsync(async (req, res, next) => {
-  const cart = await Cart.findOne({
-    where: { user_id: req.user },
-    include: User,
-  });
-  const user = cart.User
-  // const session = await stripe.checkout.sessions.create({
-  //   payment_method_types: ['card'],
-  //   success_url: `${req.protocol}://${req.get('host')}/my-tours/?tour=${
-  //     1
-  //   }&user=${user.id}&price=${1}`,
-  //   cancel_url: `${req.protocol}://${req.get('host')}/tour/${1}`,
-  //   customer_email: user.email,
-  //   client_reference_id: cart.isSoftDeleted,
-  //   line_items: [
-  //     {
-  //       name: `x`,
-  //       description: "tour.summary",
-  //       images: [`https://www.natours.dev/img/tours/`],
-  //       amount: 100,
-  //       currency: 'usd',
-  //       quantity: 1
-  //     }
-  //   ]
-  // });
-
-  const { method } = req.body;
-  if (!method) {
-    return next(new appError("Should pass a payment method", 400));
-  }
-
-
-  const cartItems = await CartItem.findAll({
-    where: { cart_id: cart?.id },
-    include: [Product],
-  });
-
-  if (!cart || cartItems.length === 0) {
-    return next(new appError("The cart is empty", 400));
-  }
-
-  const order = await createOrder(req.user, cart);
-  const orderItems = await createOrderItems(order, cartItems);
-  const total = await calculateTotalCheckOut(orderItems);
-
-  // Update order total and fetch the updated order details
-  await updateOrder(order.id, total);
-  const updatedOrder = await Order.findByPk(order.id);
-
-  await deleteCartItems(cartItems);
-  const orderState = await createOrderState(order.id);
-  const payment = await createPayment(method, order.id, req.user);
-
-  res.status(200).json({
-    status: "success",
-    data: session,
-  });
-});
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
   let orderId = req.params.orderId
@@ -231,63 +272,76 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   })
 })
 
-async function createOrder(userId, cart) {
-  return Order.create({
-    user_id: userId,
-    address_id: cart.User.address_id,
-    total: 0,
-  });
+// functions 
+async function createOrder(userId, cart, transaction) {
+  return Order.create(
+    {
+      user_id: userId,
+      address_id: cart.User.address_id,
+      total: 0,
+    },
+    { transaction } // Pass the transaction parameter to the create method
+  );
 }
 
-async function createOrderItems(order, cartItems) {
+async function createOrderItems(order, cartItems, transaction) {
   const orderItems = [];
 
   for (const cartItem of cartItems) {
-    const orderItem = await OrderItem.create({
-      order_id: order.id,
-      product_id: cartItem.product_id,
-      quantity: cartItem.quantity,
-      price: cartItem.Product.price,
-      total_cost: cartItem.quantity * cartItem.Product.price,
-    });
+    const orderItem = await OrderItem.create(
+      {
+        order_id: order.id,
+        product_id: cartItem.product_id,
+        quantity: cartItem.quantity,
+        price: cartItem.Product.price,
+        total_cost: cartItem.quantity * cartItem.Product.price,
+      },
+      { transaction } // Pass the transaction parameter to the create method
+    );
     orderItems.push(orderItem);
   }
+
   return orderItems;
 }
 
 async function calculateTotalCheckOut(orderItems) {
-  let total = 0
-  console.log(orderItems)
+  let total = 0;
+
   for (const oi of orderItems) {
-    total += oi.total_cost
+    total += oi.total_cost;
   }
-  return total
+
+  return total;
 }
 
-async function updateOrder(orderId, total) {
+async function updateOrder(orderId, total, transaction) {
   // Update total in the order
-  await Order.update({ total }, { where: { id: orderId } });
+  await Order.update({ total }, { where: { id: orderId }, transaction });
 }
 
-
-
-async function deleteCartItems(cartItems) {
+async function deleteCartItems(cartItems, transaction) {
   for (const cartItem of cartItems) {
     await CartItem.destroy({
       where: { id: cartItem.id },
+      transaction, // Pass the transaction parameter to the destroy method
     });
   }
 }
 
-async function createOrderState(orderId) {
-  return OrderState.create({ order_id: orderId });
+async function createOrderState(orderId, transaction) {
+  return OrderState.create(
+    { order_id: orderId },
+    { transaction } // Pass the transaction parameter to the create method
+  );
 }
 
-async function createPayment(method, orderId, userId) {
-  return Payment.create({
-    method,
-    order_id: orderId,
-    user_id: userId,
-  });
+async function createPayment(method, orderId, userId, transaction) {
+  return Payment.create(
+    {
+      method,
+      order_id: orderId,
+      user_id: userId,
+    },
+    { transaction } // Pass the transaction parameter to the create method
+  );
 }
-
