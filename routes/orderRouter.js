@@ -14,5 +14,5 @@ router.post("/recieveOrder/:orderId",orderController.recieveOrder)
 router.get("/getUserOrders/:userId", orderController.getUserOrders)
 router.delete("/deleteFromOrder/:orderId/:orderItemIds",orderController.deleteFromOrder)
 
-router.get("/getProductsForUser")
+router.get("/getProductsForUser/:userId",orderController.getProductsForUser)
 module.exports = router

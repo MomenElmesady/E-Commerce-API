@@ -272,6 +272,78 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   })
 })
 
+exports.getProductsForUser = catchAsync(async (req, res, next) => {
+  const result = await OrderItem.findAll({
+    attributes: [
+      [sequelize.literal('user_id'), 'user_id'],
+      [sequelize.literal('product_id'), 'product_id'],
+      [sequelize.literal('user_name'), 'user_name'],
+      [sequelize.literal('name'), 'product_name'],
+      [sequelize.fn('COUNT', sequelize.literal('Product.id')), 'numberOfBuying'],
+    ],
+    include: [
+      {
+        model: Order,
+        attributes: [],
+        where: { user_id: 62 },
+        include: [
+          {
+            model: User,
+            attributes: [],
+          },
+        ],
+      },
+      {
+        model: Product,
+        attributes: [],
+      },
+    ],
+    // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
+    group: ['user_id', 'product_id'],
+    raw: true,
+  });
+  res.status(200).json({
+    status: "success",
+    data: result
+  })
+})
+// same function but with different execution // 
+// exports.getProductsForUser = catchAsync(async (req, res, next) => {
+//   const result = await Order.findAll({
+//     attributes: [
+//       [sequelize.literal('user_id'), 'user_id'],
+//       [sequelize.literal('product_id'), 'product_id'],
+//       [sequelize.literal('user_name'), 'user_name'],
+//       [sequelize.literal('name'), 'product_name'],
+//       [sequelize.fn('COUNT', sequelize.literal('product_id')), 'numberOfBuying'],
+//     ],
+//     include: [
+//       {
+//         model: OrderItem,
+//         attributes: [],
+//         include: [
+//           {
+//             model: Product,
+//             attributes: [],
+//           },
+//         ],
+//       },
+//       {
+//         model: User,
+//         attributes: [],
+//         where: {id: req.params.userId}
+//       },
+      
+//     ],
+//     // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
+//     group: ['user_id', 'product_id'],
+//     raw: true,
+//   });
+//   res.status(200).json({
+//     status: "success",
+//     data: result
+//   })
+// })
 // functions 
 async function createOrder(userId, cart, transaction) {
   return Order.create(
