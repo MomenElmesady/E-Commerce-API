@@ -1,9 +1,35 @@
 const express = require("express")
-const router = express.Router()
+const multer = require("multer")
 const productController = require("../constrollers/productController")
 const authController = require("../constrollers/authController")
+const appError = require("../utils/appError")
+
+const router = express.Router()
+
+const storage = multer.diskStorage({
+  destination: (req,file,cb)=>{
+    cb(null,"uploads")
+  },
+  filename: (req,file,cb)=>{
+    const ext = file.mimetype.split("/")[1]
+    const fileName = `${Date.now()}-p.${ext}`
+    cb(null,fileName)
+  }
+})
+
+const fileFilter = (req,file,cb)=>{
+  const type = file.mimetype.split("/")[0]
+  if (type === "image")
+    return cb(null,true)
+  else 
+    return cb(new appError("file must be an image",400),false)
+}
+const upload = multer({storage,fileFilter})
+
+// test
+// router.post("/upload",upload.single("photo"))
 router.route("/").get(productController.getAllProducts)
-.post(productController.createProduct)
+.post(upload.single("photo"),productController.createProduct)
 
 router.get("/search",productController.searchInProducts)
 

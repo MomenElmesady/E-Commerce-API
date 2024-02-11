@@ -1,4 +1,7 @@
 const express = require("express")
+const dotenv = require("dotenv")
+dotenv.config({ path: "./.env" })
+const path = require("path")
 const addressRouter = require("./routes/addressRouter")
 const userRouter = require("./routes/userRouter")
 const cookieParser = require('cookie-parser');
@@ -7,12 +10,14 @@ const categoryRouter = require("./routes/categoryRouter")
 const productRouter = require("./routes/productRouter")
 const cartRouter = require("./routes/cartRouter")
 const orderRouter = require("./routes/orderRouter")
-const dotenv = require("dotenv")
-dotenv.config({ path: "./.env" })
 const app = express()
 
+
 app.use(express.json());
+app.use('/api/v1/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use(cookieParser());
+
 
 app.use("/api/v1/address",addressRouter)
 app.use("/api/v1/user",userRouter)

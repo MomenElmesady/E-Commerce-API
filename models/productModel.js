@@ -17,6 +17,10 @@ const Product = sequelize.define("Product", {
   },
   category_id: {
     type: DataTypes.INTEGER
+  },
+  photo: {
+    type: DataTypes.STRING,
+    defaultValue: "default.png"
   }
 }, {
   timestamps: true

@@ -6,6 +6,8 @@ const catchAsync = require("../utils/catchAsync");
 const Cart = require("../models/cartModel");
 
 exports.createProduct = catchAsync(async (req, res, next) => {
+  let data = req.body
+  data.photo = req.file?.filename || "default.png"
   const product = await Product.create(req.body)
   res.status(200).json(product)
 })
