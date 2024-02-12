@@ -228,6 +228,15 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
   let orderId = req.params.orderId
+  const orderState = await OrderState.findOne({where: {
+    order_id: orderId
+  }})
+  if (!orderState){
+    return next(new appError("there is no order with this id",400))
+  }
+  if (orderState.state == "recieved"){
+    return next(new appError("The order is already recieved",400))
+  }
   await OrderState.update({
     state: "recieved",
     payment: true

@@ -3,7 +3,7 @@ const multer = require("multer")
 const productController = require("../constrollers/productController")
 const authController = require("../constrollers/authController")
 const appError = require("../utils/appError")
-
+const reviewRouter = require("./reviewRouter")
 const router = express.Router()
 
 const storage = multer.diskStorage({
@@ -25,6 +25,9 @@ const fileFilter = (req,file,cb)=>{
     return cb(new appError("file must be an image",400),false)
 }
 const upload = multer({storage,fileFilter})
+
+// redirect to review Router / merge routes /
+router.use("/:productId/review",reviewRouter)
 
 // test
 // router.post("/upload",upload.single("photo"))

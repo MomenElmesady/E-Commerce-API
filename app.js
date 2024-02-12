@@ -10,6 +10,7 @@ const categoryRouter = require("./routes/categoryRouter")
 const productRouter = require("./routes/productRouter")
 const cartRouter = require("./routes/cartRouter")
 const orderRouter = require("./routes/orderRouter")
+const reviewRouter = require("./routes/reviewRouter")
 const app = express()
 
 
@@ -26,6 +27,7 @@ app.use("/api/v1/category",categoryRouter)
 app.use("/api/v1/product",productRouter)
 app.use("/api/v1/cart",cartRouter)
 app.use("/api/v1/order",orderRouter)
+app.use("/api/v1/review",reviewRouter)
 
 app.use((err,req,res,next)=>{
   res.status(err.statusCode || 500).json({
