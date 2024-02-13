@@ -89,23 +89,6 @@ exports.searchInProducts = catchAsync(async (req, res, next) => {
   })
 })
 
-exports.addToCart = catchAsync(async (req, res, next) => {
-  const cart = await Cart.findOne({
-    where: {
-      user_id: req.user
-    }
-  })
-  const cartItem = await CartItem.create({
-    quantity: req.body.quantity || 1,
-    product_id: req.params.productId,
-    cart_id: cart.id 
-  })
-  res.status(200).json({
-    status: "success",
-    data: cartItem
-  })
-})
-
 exports.deleteProduct = handlerFactory.deleteOne(Product)
 
 exports.getAllProducts = handlerFactory.getAll(Product)

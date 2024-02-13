@@ -43,7 +43,6 @@ router.route("/:id").get(productController.getProduct)
 
 router.get("/category/:categoryId",productController.getProductsOfCategory)
 
-router.post("/addToCart/:productId",authController.protect,productController.addToCart)
 
 router.get("/getProductsForUser/:userId",productController.getProductsForUser)
 

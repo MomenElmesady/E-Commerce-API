@@ -3,13 +3,14 @@ const catchAsync = require("../utils/catchAsync")
 
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    const x = await Model.destroy({
+    const result = await Model.destroy({
       where: {
         id: req.params.id
       }
     })
-    if (x == 0)
+    if (result == 0) {
       return next(new appError("Error On Deleting!"))
+    }
     res.status(200).json({
       status: "success",
       message: 'Deleted successfully',
@@ -53,20 +54,17 @@ exports.createOne = Model =>
 
 exports.updateOne = Model =>
   catchAsync(async (req, res, next) => {
-    const x = await Model.update(
+    const result = await Model.update(
       req.body,
       {
         where: { id: req.params.id },
       }
     );
-    if (x[0] === 0) {
+    if (result[0] === 0) {
       return next(new appError("There is no row with this ID ", 400));
     }
     res.status(200).json({
       status: "success",
       message: 'Updated successfully',
-      data: {
-        review: x,
-      },
     });
   })
