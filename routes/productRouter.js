@@ -32,11 +32,11 @@ router.use("/:productId/review",reviewRouter)
 // test
 // router.post("/upload",upload.single("photo"))
 router.route("/").get(productController.getAllProducts)
-.post(upload.single("photo"),productController.createProduct)
+.post(upload.single("photo"),productController.addDefaultPhoto,productController.createProduct)
 
 router.get("/search",productController.searchInProducts)
 
-router.route("/:productId").get(productController.getProduct)
+router.route("/:id").get(productController.getProduct)
 .patch(productController.updateProduct)
 .delete(productController.deleteProduct)
 
@@ -44,4 +44,7 @@ router.route("/:productId").get(productController.getProduct)
 router.get("/category/:categoryId",productController.getProductsOfCategory)
 
 router.post("/addToCart/:productId",authController.protect,productController.addToCart)
+
+router.get("/getProductsForUser/:userId",productController.getProductsForUser)
+
 module.exports = router

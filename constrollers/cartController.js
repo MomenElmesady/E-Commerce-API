@@ -3,11 +3,12 @@ const Cart = require("../models/cartModel")
 const Product = require("../models/productModel")
 const catchAsync = require("../utils/catchAsync")
 const sequelize = require("sequelize")
+const handlerFactory = require("./handlerFactory")
 
 exports.deleteFromCart = catchAsync(async (req, res, next) => {
   await CartItem.destroy({
     where: {
-      id: req.params.cartItemId
+      id: req.params.id
     }
   })
   res.status(200).json({
@@ -20,18 +21,22 @@ exports.showCart = catchAsync(async (req, res, next) => {
   const cart = await Cart.findOne({
     where: {
       user_id: req.user
+    },
+    include: {
+      model: CartItem,
+      include: Product
     }
   })
-  const cartItems = await CartItem.findAll({
-    where: {
-      cart_id: cart.id
-    },
-    include: Product
-  })
+  // const cartItems = await CartItem.findAll({
+  //   where: {
+  //     cart_id: cart.id
+  //   },
+  //   include: Product
+  // })
 
   res.status(200).json({
     status: "success",
-    data: cartItems
+    data: cart
   })
 })
 exports.showPrice = (async (req, res, next) => {
@@ -62,27 +67,5 @@ exports.showPrice = (async (req, res, next) => {
   })
 })
 
-// dont do this
-// exports.showPrice = (async (req, res, next) => {
-//   const cart = await Cart.findOne({
-//     where: {
-//       user_id: req.user
-//     }
-//   })
-//   const cartItems = await CartItem.findAll({
-//     where: {
-//       cart_id: cart.id
-//     },
-//     include: Product
-
-//   })
-//   // shlould use sum in sequelize grouping
-//   let x = 0
-//   for (i = 0; i < cartItems.length; i++) {
-//     x += (cartItems[i].quantity * cartItems[i].Product.price)
-//   }
-//   res.status(200).json({
-//     status: "success",
-//     price: x
-//   })
-// })
+exports.getCart = handlerFactory.getOne(Cart)
+exports.getAllCarts = handlerFactory.getAll(Cart)

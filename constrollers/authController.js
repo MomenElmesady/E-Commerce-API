@@ -178,7 +178,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   } catch (err) {
     return next(new appError("invalid token", 400))
   }
-  const accessToken = await createToken(auth._id)
+  const accessToken = await createToken(auth.id)
   res.status(200).json({ accessToken })
 })
 

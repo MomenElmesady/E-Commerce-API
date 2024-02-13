@@ -4,7 +4,7 @@ const authController = require("../constrollers/authController")
 const router = express.Router()
 
 router.route("/").get(orderController.getAllOrders)
-router.route("/:orderId").get(orderController.getOrder)
+router.route("/:id").get(orderController.getOrder)
 .patch(orderController.updateOrder)
 .delete(orderController.deleteOrder)
 
@@ -14,5 +14,4 @@ router.post("/recieveOrder/:orderId",orderController.recieveOrder)
 router.get("/getUserOrders/:userId", orderController.getUserOrders)
 router.delete("/deleteFromOrder/:orderId/:orderItemIds",orderController.deleteFromOrder)
 
-router.get("/getProductsForUser/:userId",orderController.getProductsForUser)
 module.exports = router

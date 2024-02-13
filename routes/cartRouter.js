@@ -7,4 +7,5 @@ router.post("/deleteFromCart/:cartItemId", authController.protect, cartControlle
 router.get("/showCart", authController.protect, cartController.showCart)
 router.get("/showPrice", authController.protect, cartController.showPrice)
 
+router.route("/:id").get(cartController.getCart)
 module.exports = router

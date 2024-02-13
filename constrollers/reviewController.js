@@ -6,16 +6,8 @@ const OrderState = require("../models/orderStateModel")
 const catchAsync = require("../utils/catchAsync")
 const appError = require("../utils/appError")
 const sequelize = require("../sequelize")
+const handlerFactory = require("./handlerFactory")
 
-exports.getReview = catchAsync(async (req, res, next) => {
-  const review = await Review.findByPk(req.params.reviewId)
-  if (!review)
-    return next(new appError("there is no review with this id", 400))
-  res.status(200).json({
-    status: "success",
-    data: review
-  })
-})
 
 /* other way for updating review */
 // exports.updateReview = catchAsync(async (req, res, next) => {
@@ -49,23 +41,21 @@ exports.getReview = catchAsync(async (req, res, next) => {
 
 
 exports.updateReview = catchAsync(async (req, res, next) => {
-  const [rowsUpdated, [updatedReview]] = await Review.update(
+  const x = await Review.update(
     req.body,
     {
-      where: { user_id: req.user, id: req.params.reviewId },
-      returning: true, // This option returns the updated records
+      where: { user_id: req.user, id: req.params.id },
     }
   );
 
-  if (rowsUpdated === 0) {
+  if (x[0] === 0) {
     return next(new appError("There is no review with this ID that belongs to the user", 400));
   }
-
   res.status(200).json({
     status: "success",
     message: 'Updated successfully',
     data: {
-      review: updatedReview,
+      review: x,
     },
   });
 });
@@ -83,21 +73,6 @@ exports.updateReview = catchAsync(async (req, res, next) => {
 //     message: 'Deleted successfully',
 //   })
 // })
-
-exports.deleteReview = catchAsync(async (req, res, next) => {
-  const x = await Review.destroy({
-    where: {
-      user_id: req.user, id: req.params.reviewId,
-    }
-  })
-  if (x == 0)
-    return next(new appError("there is no review with this id belong to this user"))
-
-  res.status(200).json({
-    status: "success",
-    message: 'Deleted successfully',
-  })
-})
 
 
 exports.checkBuying = catchAsync(async (req, res, next) => {
@@ -121,7 +96,7 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
   else
     next(new appError("user dont buy this product", 400))
 })
-exports.createReview = catchAsync(async (req, res, next) => {
+exports.checkReviewExisting = catchAsync(async (req, res, next) => {
   const checkUserReview = await Review.findOne({
     where: {
       user_id: req.user,
@@ -131,15 +106,10 @@ exports.createReview = catchAsync(async (req, res, next) => {
   if (checkUserReview) {
     return next(new appError("This user hasalready rate this product"))
   }
-  const review = await Review.create({
-    product_id: req.params.productId,
-    user_id: req.user,
-    rate: req.body.rate,
-    description: req.body.description,
-    date: Date.now()
-  })
-  res.status(200).json({ review })
+  next()
 })
+
+
 
 exports.getProductReviews = catchAsync(async (req, res, next) => {
   const reviews = await Review.findAll({
@@ -167,4 +137,32 @@ exports.getAverageRating = catchAsync(async (req, res, next) => {
     status: "success",
     Average: reviews
   })
+
 })
+
+
+exports.deleteReview = catchAsync(async (req, res, next) => {
+  const x = await Review.destroy({
+    where: {
+      user_id: req.user, id: req.params.id,
+    }
+  })
+  if (x == 0)
+    return next(new appError("there is no review with this id belong to this user"))
+
+  res.status(200).json({
+    status: "success",
+    message: 'Deleted successfully',
+  })
+})
+
+exports.addToBodyReq = catchAsync(async (req, res, next) => {
+  req.body.product_id = req.params.productId,
+    req.body.user_id = req.user,
+    req.body.date = Date.now()
+  next()
+})
+
+exports.createReview = handlerFactory.createOne(Review)
+
+exports.getReview = handlerFactory.getOne(Review)

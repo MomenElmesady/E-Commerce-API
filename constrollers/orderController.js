@@ -8,22 +8,16 @@ const Product = require("../models/productModel")
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
 const Payment = require("../models/paymentModel")
+const handlerFactory = require("./handlerFactory")
 
 const { Op } = require('sequelize');
 const sequelize = require("../sequelize")
 
-exports.getAllOrders = catchAsync(async (req, res, next) => {
-  const orders = await Order.findAll()
-  res.status(200).json({
-    status: "success",
-    data: orders
-  })
-})
 
 exports.getOrder = catchAsync(async (req, res, next) => {
   const order = await Order.findOne({
     where: {
-      id: req.params.orderId
+      id: req.params.id
     },
     include: [
       {
@@ -102,7 +96,7 @@ exports.updateOrder = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteOrder = catchAsync(async (req, res, next) => {
-  const orderId = req.params.orderId;
+  const orderId = req.params.id;
   const transaction = await sequelize.transaction();
 
   try {
@@ -185,7 +179,7 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
 exports.getOrderState = catchAsync(async (req, res, next) => {
   const orderState = await OrderState.findOne({
     where: {
-      order_id: req.params.orderId
+      order_id: req.params.id
     }
   })
   if (!orderState) {
@@ -228,6 +222,7 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
   let orderId = req.params.orderId
+  console.log(orderId)
   const orderState = await OrderState.findOne({where: {
     order_id: orderId
   }})
@@ -281,41 +276,6 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   })
 })
 
-exports.getProductsForUser = catchAsync(async (req, res, next) => {
-  const result = await OrderItem.findAll({
-    attributes: [
-      [sequelize.literal('user_id'), 'user_id'],
-      [sequelize.literal('product_id'), 'product_id'],
-      [sequelize.literal('user_name'), 'user_name'],
-      [sequelize.literal('name'), 'product_name'],
-      [sequelize.fn('COUNT', sequelize.literal('Product.id')), 'numberOfBuying'],
-    ],
-    include: [
-      {
-        model: Order,
-        attributes: [],
-        where: { user_id: 62 },
-        include: [
-          {
-            model: User,
-            attributes: [],
-          },
-        ],
-      },
-      {
-        model: Product,
-        attributes: [],
-      },
-    ],
-    // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
-    group: ['user_id', 'product_id'],
-    raw: true,
-  });
-  res.status(200).json({
-    status: "success",
-    data: result
-  })
-})
 // same function but with different execution // 
 // exports.getProductsForUser = catchAsync(async (req, res, next) => {
 //   const result = await Order.findAll({
@@ -342,17 +302,20 @@ exports.getProductsForUser = catchAsync(async (req, res, next) => {
 //         attributes: [],
 //         where: {id: req.params.userId}
 //       },
-      
+
 //     ],
 //     // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
 //     group: ['user_id', 'product_id'],
 //     raw: true,
 //   });
 //   res.status(200).json({
-//     status: "success",
-//     data: result
-//   })
-// })
+  //     status: "success",
+  //     data: result
+  //   })
+  // })
+
+  exports.getAllOrders = handlerFactory.getAll(Order)
+
 // functions 
 async function createOrder(userId, cart, transaction) {
   return Order.create(
@@ -378,10 +341,10 @@ async function createOrderItems(order, cartItems, transaction) {
         total_cost: cartItem.quantity * cartItem.Product.price,
       },
       { transaction } // Pass the transaction parameter to the create method
-    );
-    orderItems.push(orderItem);
-  }
-
+      );
+      orderItems.push(orderItem);
+    }
+    
   return orderItems;
 }
 
@@ -426,3 +389,4 @@ async function createPayment(method, orderId, userId, transaction) {
     { transaction } // Pass the transaction parameter to the create method
   );
 }
+

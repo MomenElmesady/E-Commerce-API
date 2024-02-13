@@ -1,46 +1,57 @@
 const Category = require("../models/categoryModel")
 const Product = require("../models/productModel")
 const CartItem = require("../models/cartItemModel")
+const OrderItem = require("../models/orderItemModel")
+const Order = require("../models/orderModel")
+const User = require("../models/userModel")
 const { Op } = require('sequelize');
 const catchAsync = require("../utils/catchAsync");
 const Cart = require("../models/cartModel");
+const handlerFactory = require("./handlerFactory")
+const sequelize = require("../sequelize")
 
-exports.createProduct = catchAsync(async (req, res, next) => {
-  let data = req.body
-  data.photo = req.file?.filename || "default.png"
-  const product = await Product.create(req.body)
-  res.status(200).json(product)
-})
 
-exports.getAllProducts = catchAsync(async (req, res, next) => {
-  const products = await Product.findAll()
-  res.status(200).json(products)
-})
-
-exports.getProduct = catchAsync(async (req, res, next) => {
-  const product = await Product.findByPk(req.params.productId)
-  res.status(200).json(product)
-})
-
-exports.deleteProduct = catchAsync(async (req, res, next) => {
-  await Product.destroy({
-    where: {
-      id: req.params.productId
-    }
-  })
+exports.getProductsForUser = catchAsync(async (req, res, next) => {
+  const result = await OrderItem.findAll({
+    attributes: [
+      [sequelize.literal('user_id'), 'user_id'],
+      [sequelize.literal('product_id'), 'product_id'],
+      [sequelize.literal('user_name'), 'user_name'],
+      [sequelize.literal('name'), 'product_name'],
+      [sequelize.fn('COUNT', sequelize.literal('Product.id')), 'numberOfBuying'],
+    ],
+    include: [
+      {
+        model: Order,
+        attributes: [],
+        where: { user_id: 62 },
+        include: [
+          {
+            model: User,
+            attributes: [],
+          },
+        ],
+      },
+      {
+        model: Product,
+        attributes: [],
+      },
+    ],
+    // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
+    group: ['user_id', 'product_id'],
+    raw: true,
+  });
   res.status(200).json({
-    message: "deleted successfully"
+    status: "success",
+    data: result
   })
 })
 
-exports.updateProduct = catchAsync(async (req, res, next) => {
-  const product = await Product.update(req.body, {
-    where: {
-      id: req.params.productId
-    }
-  })
-  res.status(200).json(product)
+exports.addDefaultPhoto = catchAsync(async(req,res,next)=>{
+  req.body.photo = req.file?.filename || "default.png"
+  next()
 })
+
 
 exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
   let mn = req.query.minPrice || 0
@@ -94,3 +105,11 @@ exports.addToCart = catchAsync(async (req, res, next) => {
     data: cartItem
   })
 })
+
+exports.deleteProduct = handlerFactory.deleteOne(Product)
+
+exports.getAllProducts = handlerFactory.getAll(Product)
+exports.getProduct = handlerFactory.getOne(Product)
+exports.createProduct = handlerFactory.createOne(Product)
+
+exports.updateProduct = handlerFactory.updateOne(Product)
