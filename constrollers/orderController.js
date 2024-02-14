@@ -22,17 +22,23 @@ exports.getOrder = catchAsync(async (req, res, next) => {
     include: [
       {
         model: OrderState,
+        attributes: ["id", "state", "payment"]
       },
       {
         model: OrderItem,
+        attributes: ["id", "quantity", "price", "total_cost"],
         include: [
           {
-            model: Product
+            model: Product,
+            attributes: ["id", "name", "description", "price", "category_id", "photo"]
           }
         ]
       }
     ]
   })
+  if (!order) {
+    return next(new appError("There is no order with this id", 404))
+  }
   res.status(200).json({
     status: "success",
     data: order
@@ -175,15 +181,19 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
   }
 });
 
-
 exports.getOrderState = catchAsync(async (req, res, next) => {
+  const orderId = req.params.orderId
+  const order = await Order.findByPk(orderId)
+  if (!order) {
+    return next(new appError("There is no order with this id", 404))
+  }
   const orderState = await OrderState.findOne({
     where: {
-      order_id: req.params.id
+      order_id: orderId
     }
   })
   if (!orderState) {
-    return next(new appError("there is no order with this id"))
+    return next(new appError("There is no order state for this order"))
   }
   res.status(200).json({
     status: "success",
@@ -193,11 +203,13 @@ exports.getOrderState = catchAsync(async (req, res, next) => {
 
 exports.getUserOrders = catchAsync(async (req, res, next) => {
   const orders = await Order.findAll({
+    where: {
+      user_id: req.params.userId
+    },
     include: [
       {
         model: User,
         attributes: ['id', 'user_name', 'email'],
-        where: { id: req.params.userId },
       },
       {
         model: OrderItem,
@@ -221,100 +233,134 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
 })
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
-  let orderId = req.params.orderId
-  console.log(orderId)
-  const orderState = await OrderState.findOne({where: {
-    order_id: orderId
-  }})
-  if (!orderState){
-    return next(new appError("there is no order with this id",400))
+  const orderId = req.params.orderId;
+
+  // check if order doesn't exist
+  const order = await Order.findByPk(orderId);
+  if (!order) {
+    return next(new appError("There is no order with this id", 400));
   }
-  if (orderState.state == "recieved"){
-    return next(new appError("The order is already recieved",400))
+
+  // find and update order state
+  const orderState = await OrderState.findOne({
+    where: {
+      order_id: orderId,
+    },
+  });
+  if (!orderState) {
+    return next(new appError("There is no state for this order", 400));
   }
-  await OrderState.update({
-    state: "recieved",
-    payment: true
-  },
-    {
-      where: {
-        order_id: orderId
+  if (orderState.state === "recieved") {
+    return next(new appError("The order is already received", 400));
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    // Use update within the transaction directly
+    await OrderState.update(
+      {
+        state: "recieved",
+        payment: true,
+      },
+      {
+        where: {
+          order_id: orderId,
+        },
+        transaction,
       }
-    })
-  await Payment.update({
-    state: true,
-  },
-    {
-      where: {
-        order_id: orderId
+    );
+
+    await Payment.update(
+      {
+        state: true,
+      },
+      {
+        where: {
+          order_id: orderId,
+        },
+        transaction,
       }
-    })
-  res.status(200).json({
-    status: "success",
-    message: "order recieved successfully"
-  })
-})
+    );
+
+    // Commit the transaction if everything is successful
+    await transaction.commit();
+
+    res.status(200).json({
+      status: "success",
+      message: "Order received successfully",
+    });
+  } catch (err) {
+    // If any error occurs, rollback the transaction
+    await transaction.rollback();
+    next(err);
+  }
+});
+
 
 exports.deleteFromOrder = catchAsync(async (req, res, next) => {
-  const orderItemIds = req.params.orderItemIds.split(",")
-  const order = await Order.findByPk(req.params.orderId)
-  let total = order.total
-  const orderItems = await OrderItem.findAll({
+  const orderId = req.params.orderId;
+  const orderItemIds = req.params.orderItemIds.split(",");
+
+  const order = await Order.findOne({
     where: {
-      id: {
-        [Op.in]: orderItemIds
-      }
-    }
-  })
-  for (i of orderItems) {
-    total -= i.total_cost
+      id: orderId,
+    },
+    include: {
+      model: OrderState,
+    },
+  });
+
+  if (!order) {
+    return next(new appError("There is no order with this id", 404));
   }
-  order.total = total
-  await order.save()
-  res.status(200).json({
-    order
-  })
-})
 
-// same function but with different execution // 
-// exports.getProductsForUser = catchAsync(async (req, res, next) => {
-//   const result = await Order.findAll({
-//     attributes: [
-//       [sequelize.literal('user_id'), 'user_id'],
-//       [sequelize.literal('product_id'), 'product_id'],
-//       [sequelize.literal('user_name'), 'user_name'],
-//       [sequelize.literal('name'), 'product_name'],
-//       [sequelize.fn('COUNT', sequelize.literal('product_id')), 'numberOfBuying'],
-//     ],
-//     include: [
-//       {
-//         model: OrderItem,
-//         attributes: [],
-//         include: [
-//           {
-//             model: Product,
-//             attributes: [],
-//           },
-//         ],
-//       },
-//       {
-//         model: User,
-//         attributes: [],
-//         where: {id: req.params.userId}
-//       },
+  if (order.OrderState.state === "recieved") {
+    return next(new appError("Order is received, can't delete from it", 400));
+  }
 
-//     ],
-//     // where: { '$Order.User.id$': 62 }, // Apply the condition to the main query
-//     group: ['user_id', 'product_id'],
-//     raw: true,
-//   });
-//   res.status(200).json({
-  //     status: "success",
-  //     data: result
-  //   })
-  // })
+  const transaction = await sequelize.transaction();
 
-  exports.getAllOrders = handlerFactory.getAll(Order)
+  try {
+    let total = order.total;
+
+    const orderItems = await OrderItem.findAll({
+      where: {
+        id: {
+          [Op.in]: orderItemIds,
+        },
+        order_id: orderId,
+      },
+      transaction, // Pass the transaction to ensure atomicity
+    });
+
+    if (orderItems.length === 0) {
+      return next(new appError("There is no order items related to this order", 404));
+    }
+
+    for (const orderItem of orderItems) {
+      total -= orderItem.total_cost;
+      await orderItem.destroy({ transaction });
+    }
+
+    order.total = total;
+    await order.save({ transaction });
+
+    // Commit the transaction if everything is successful
+    await transaction.commit();
+
+    res.status(200).json({
+      order,
+    });
+  } catch (error) {
+    // If any error occurs, rollback the transaction
+    await transaction.rollback();
+    next(error);
+  }
+});
+
+
+exports.getAllOrders = handlerFactory.getAll(Order)
 
 // functions 
 async function createOrder(userId, cart, transaction) {
@@ -341,10 +387,10 @@ async function createOrderItems(order, cartItems, transaction) {
         total_cost: cartItem.quantity * cartItem.Product.price,
       },
       { transaction } // Pass the transaction parameter to the create method
-      );
-      orderItems.push(orderItem);
-    }
-    
+    );
+    orderItems.push(orderItem);
+  }
+
   return orderItems;
 }
 

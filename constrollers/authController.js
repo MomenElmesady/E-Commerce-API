@@ -108,8 +108,9 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body
-  if (!email || !password) {
-    return (next(new appError("should pass email and password", 400)))
+
+  if (!email) {
+    return (next(new appError("should pass email", 400)))
   }
   const user = await User.findOne({
     where: {
@@ -120,6 +121,14 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new appError("there is no user with this email"))
   }
+  if (user.user_role == "manager"){
+    const accessToken = await createToken(user.id)
+    res.status(200).json({ user, accessToken })
+  }
+  if (!password) {
+    return (next(new appError("should pass password", 400)))
+  }
+
   const auth = user.Auth
   const isPasswordMatch = await bcrypt.compare(password, auth.password)
   if (!isPasswordMatch) {
@@ -199,11 +208,17 @@ exports.protect = catchAsync(async (req, res, next) => {
   } catch (err) {
     return next(new appError("cant verify token", 400))
   }
-  const auth = await Auth.findOne({
+  const user = await User.findOne({
     where: {
-      user_id: decoded.id
-    }
+      id: decoded.id
+    },
+    include: Auth
   })
+  if (user.user_role == "manager"){
+    req.user = decoded.id
+    return next()
+  }
+  const auth = user.Auth
 
   if (!auth) {
     return next(new appError("Cant find this user", 400))
@@ -292,12 +307,12 @@ exports.test = catchAsync(async (req, res) => {
   res.json(user.auth)
 })
 
-exports.allowedTo = (...roles)=>{
-  return async(req,res,next)=>{
+exports.allowedTo = (...roles) => {
+  return async (req, res, next) => {
     const user = await User.findByPk(req.user)
-    if (roles.includes(user.role))
+    if (roles.includes(user.user_role))
       next()
-    else 
-      return next(new appError("This route dont allowed for this user!",400))
+    else
+      return next(new appError("This route dont allowed for this user!", 400))
   }
 }

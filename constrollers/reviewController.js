@@ -41,24 +41,22 @@ const handlerFactory = require("./handlerFactory")
 
 
 exports.updateReview = catchAsync(async (req, res, next) => {
-  const x = await Review.update(
+  const updateDetails = await Review.update(
     req.body,
     {
       where: { user_id: req.user, id: req.params.id },
     }
   );
 
-  if (x[0] === 0) {
+  if (updateDetails[0] === 0) {
     return next(new appError("There is no review with this ID that belongs to the user", 400));
   }
   res.status(200).json({
     status: "success",
     message: 'Updated successfully',
-    data: {
-      review: x,
-    },
   });
 });
+
 // exports.deleteReview = catchAsync(async (req, res, next) => {
 //   const review = await Review.findByPk(req.params.reviewId)
 //   if (!review)
@@ -74,6 +72,33 @@ exports.updateReview = catchAsync(async (req, res, next) => {
 //   })
 // })
 
+exports.deleteReview = catchAsync(async (req, res, next) => {
+  const x = await Review.destroy({
+    where: {
+      user_id: req.user, id: req.params.id,
+    }
+  })
+  if (x == 0)
+    return next(new appError("there is no review with this id belong to this user"))
+
+  res.status(200).json({
+    status: "success",
+    message: 'Deleted successfully',
+  })
+})
+
+exports.checkReviewExisting = catchAsync(async (req, res, next) => {
+  const checkUserReview = await Review.findOne({
+    where: {
+      user_id: req.user,
+      product_id: req.params.productId
+    }
+  })
+  if (checkUserReview) {
+    return next(new appError("This user has already rate this product"))
+  }
+  next()
+})
 
 exports.checkBuying = catchAsync(async (req, res, next) => {
   const orderItem = await OrderItem.findOne({
@@ -96,25 +121,27 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
   else
     next(new appError("user dont buy this product", 400))
 })
-exports.checkReviewExisting = catchAsync(async (req, res, next) => {
-  const checkUserReview = await Review.findOne({
-    where: {
-      user_id: req.user,
-      product_id: req.params.productId
-    }
-  })
-  if (checkUserReview) {
-    return next(new appError("This user hasalready rate this product"))
-  }
+
+exports.addToBodyReq = catchAsync(async (req, res, next) => {
+  req.body.product_id = req.params.productId,
+    req.body.user_id = req.user,
+    req.body.date = Date.now()
   next()
 })
 
-
-
 exports.getProductReviews = catchAsync(async (req, res, next) => {
+  const { productId } = req.params;
+  const product = await Product.findOne({
+    where: {
+      id: productId,
+    },
+  });
+  if (!product) {
+    return next(new appError("Product not found", 404))
+  }
   const reviews = await Review.findAll({
     where: {
-      product_id: req.params.productId
+      product_id: productId
     }
   })
   res.status(200).json({
@@ -124,43 +151,31 @@ exports.getProductReviews = catchAsync(async (req, res, next) => {
 })
 
 exports.getAverageRating = catchAsync(async (req, res, next) => {
-  const reviews = await Review.findAll({
+  const { productId } = req.params;
+  const product = await Product.findOne({
     where: {
-      product_id: req.params.productId
+      id: productId,
+    },
+  });
+  if (!product) {
+    return next(new appError("Product not found", 404))
+  }
+  const averageRating = await Review.findAll({
+    where: {
+      product_id: productId
     },
     attributes: [
       [sequelize.literal('product_id'), 'product_id'],
-      [sequelize.fn("AVG", sequelize.literal("rate")), "ratingAverage"]],
+      [sequelize.fn("AVG", sequelize.literal("rate")), "averageRating"]],
     group: ["product_id"]
   })
+  if (averageRating.length == 0) {
+    return next(new appError("There is no reviews for this product", 404))
+  }
   res.status(200).json({
     status: "success",
-    Average: reviews
+    data: averageRating
   })
-
-})
-
-
-exports.deleteReview = catchAsync(async (req, res, next) => {
-  const x = await Review.destroy({
-    where: {
-      user_id: req.user, id: req.params.id,
-    }
-  })
-  if (x == 0)
-    return next(new appError("there is no review with this id belong to this user"))
-
-  res.status(200).json({
-    status: "success",
-    message: 'Deleted successfully',
-  })
-})
-
-exports.addToBodyReq = catchAsync(async (req, res, next) => {
-  req.body.product_id = req.params.productId,
-    req.body.user_id = req.user,
-    req.body.date = Date.now()
-  next()
 })
 
 exports.createReview = handlerFactory.createOne(Review)

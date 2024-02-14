@@ -18,7 +18,6 @@ const cartRouter = require("./routes/cartRouter")
 const orderRouter = require("./routes/orderRouter")
 const reviewRouter = require("./routes/reviewRouter")
 
-
 const app = express();
 
 // Apply rate limiting middleware
@@ -33,12 +32,10 @@ app.use(helmet());
 app.use(hpp());
 app.use(xss());
 
-
 app.use(express.json());
 app.use('/api/v1/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cookieParser());
-
 
 app.use("/api/v1/address",addressRouter)
 app.use("/api/v1/user",userRouter)
