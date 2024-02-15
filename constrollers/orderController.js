@@ -67,7 +67,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     });
 
     if (!cart || cartItems.length === 0) {
-      throw new appError("The cart is empty or invalid", 400);
+      throw new appError("The cart is empty or invalid", 403);
     }
 
     const order = await createOrder(req.user, cart, transaction);
@@ -238,7 +238,7 @@ exports.recieveOrder = catchAsync(async (req, res, next) => {
   // check if order doesn't exist
   const order = await Order.findByPk(orderId);
   if (!order) {
-    return next(new appError("There is no order with this id", 400));
+    return next(new appError("There is no order with this id", 404));
   }
 
   // find and update order state
@@ -248,10 +248,10 @@ exports.recieveOrder = catchAsync(async (req, res, next) => {
     },
   });
   if (!orderState) {
-    return next(new appError("There is no state for this order", 400));
+    return next(new appError("There is no state for this order", 404));
   }
   if (orderState.state === "recieved") {
-    return next(new appError("The order is already received", 400));
+    return next(new appError("The order is already received", 401));
   }
 
   const transaction = await sequelize.transaction();

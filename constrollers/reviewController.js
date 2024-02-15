@@ -49,7 +49,7 @@ exports.updateReview = catchAsync(async (req, res, next) => {
   );
 
   if (updateDetails[0] === 0) {
-    return next(new appError("There is no review with this ID that belongs to the user", 400));
+    return next(new appError("There is no review with this ID that belongs to the user", 404));
   }
   res.status(200).json({
     status: "success",
@@ -79,7 +79,7 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
     }
   })
   if (x == 0)
-    return next(new appError("there is no review with this id belong to this user"))
+    return next(new appError("There  is no review with this id belong to this user"))
 
   res.status(200).json({
     status: "success",
@@ -119,7 +119,7 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
   if (orderItem)
     next()
   else
-    next(new appError("user dont buy this product", 400))
+    next(new appError("User dont buy this product", 403))
 })
 
 exports.addToBodyReq = catchAsync(async (req, res, next) => {
@@ -170,7 +170,7 @@ exports.getAverageRating = catchAsync(async (req, res, next) => {
     group: ["product_id"]
   })
   if (averageRating.length == 0) {
-    return next(new appError("There is no reviews for this product", 404))
+    return next(new appError("There is no reviews for this product", 400))
   }
   res.status(200).json({
     status: "success",

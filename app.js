@@ -3,6 +3,7 @@ const dotenv = require("dotenv")
 dotenv.config({ path: "./.env" })
 const path = require("path")
 const cookieParser = require('cookie-parser');
+const errorController = require("./constrollers/errorController.js")
 // security 
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
@@ -46,13 +47,13 @@ app.use("/api/v1/cart",cartRouter)
 app.use("/api/v1/order",orderRouter)
 app.use("/api/v1/review",reviewRouter)
 
-app.use((err,req,res,next)=>{
-  res.status(err.statusCode || 500).json({
-    status: err.statusText || "error",
-    message: err.message
+app.all("*",(req,res,next)=>{
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 })
-})
+
+app.use(errorController)
+
 app.listen(1020,()=>{
-  console.log("app Running")
+  console.log("app Running on port 1020")
 })
 

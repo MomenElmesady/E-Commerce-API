@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --watchAll",
-    "start": "node app",
-    "dev": "nodemon app"  
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "start:prod": "NODE_ENV=production nodemon app.js"
   },
   "author": "",
   "license": "ISC",

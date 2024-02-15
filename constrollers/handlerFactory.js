@@ -33,7 +33,7 @@ exports.getOne = Model =>
   catchAsync(async (req, res, next) => {
     const data = await Model.findByPk(req.params.id)
     if (!data) {
-      return next(new appError("there is no row with this id"))
+      return next(new appError("There  is no row with this id",404))
     }
     res.status(200).json({
       status: "success",
@@ -61,7 +61,7 @@ exports.updateOne = Model =>
       }
     );
     if (result[0] === 0) {
-      return next(new appError("There is no row with this ID ", 400));
+      return next(new appError("There is no row with this ID ", 404));
     }
     res.status(200).json({
       status: "success",

@@ -43,7 +43,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
   } catch (err) {
     auth.verificationToken = null
     await auth.save()
-    res.status(400).json({
+    res.status(500).json({
       status: "fail",
       message: "cant send token",
       err: err.message
@@ -67,7 +67,7 @@ exports.verify = catchAsync(async (req, res, next) => {
     .update(token)
     .digest('hex')
   if (token != auth.verificationToken) {
-    return next(new appError("token dont match the correct token", 404))
+    return next(new appError("token dont match the correct token", 401))
   }
   auth.isVerified = true
   auth.verificationToken = null
@@ -98,7 +98,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   } catch (err) {
     auth.verificationToken = null
     await auth.save()
-    res.status(400).json({
+    res.status(500).json({
       status: "fail",
       message: "cant send token",
       err: err.message
@@ -119,7 +119,7 @@ exports.login = catchAsync(async (req, res, next) => {
     include: Auth
   })
   if (!user) {
-    return next(new appError("there is no user with this email"))
+    return next(new appError("There is no user with this email"))
   }
   if (user.user_role == "manager"){
     const accessToken = await createToken(user.id)
@@ -132,7 +132,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const auth = user.Auth
   const isPasswordMatch = await bcrypt.compare(password, auth.password)
   if (!isPasswordMatch) {
-    return next(new appError("Wrong password", 400))
+    return next(new appError("Wrong password", 401))
   }
   createAndSendToken(user, auth, 200, res)
 })
@@ -140,7 +140,7 @@ exports.login = catchAsync(async (req, res, next) => {
 exports.logout = catchAsync(async (req, res, next) => {
   let refreshToken = res.cookies?.refreshToken
   if (!refreshToken) {
-    return next(new appError("there is no refreshToken in cookie", 404))
+    return next(new appError("There is no refreshToken in cookie", 400))
   }
   const user = await User.findOne({
     where:
@@ -151,10 +151,10 @@ exports.logout = catchAsync(async (req, res, next) => {
   })
   const auth = user.Auth
   if (!auth.refreshToken) {
-    return next(new appError("the user dont have refresh token", 400))
+    return next(new appError("the user dont have refresh token", 401))
   }
   if (refreshToken != auth.refreshToken) {
-    return next(new appError("Invalid Token", 400))
+    return next(new appError("Invalid Token", 401))
   }
   auth.refreshToken = ""
   await auth.save()
@@ -171,21 +171,21 @@ exports.logout = catchAsync(async (req, res, next) => {
 exports.refreshToken = catchAsync(async (req, res, next) => {
   let refreshToken = res.cookies?.refreshToken
   if (!refreshToken) {
-    return next(new appError("there is no refreshToken in cookie", 404))
+    return next(new appError("There is no refreshToken in cookie", 400))
   }
-  const auth = await Quth.findOne({
+  const auth = await Auth.findOne({
     where: {
       refreshToken
     }
   })
   if (!auth) {
-    return next(new appError("there is no user with this token", 400))
+    return next(new appError("There is no user with this token", 404))
   }
   try {
     // The purpose of this verification is to ensure that the refresh token is valid and has not been tampered with.     
     await promisify(jwt.verify)(auth?.refreshToken, process.env.JWT_SECRET)
   } catch (err) {
-    return next(new appError("invalid token", 400))
+    return next(new appError("invalid token", 401))
   }
   const accessToken = await createToken(auth.id)
   res.status(200).json({ accessToken })
@@ -206,7 +206,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   try {
     var decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
   } catch (err) {
-    return next(new appError("cant verify token", 400))
+    return next(new appError("cant verify token", 401))
   }
   const user = await User.findOne({
     where: {
@@ -214,6 +214,9 @@ exports.protect = catchAsync(async (req, res, next) => {
     },
     include: Auth
   })
+  if (!user){
+    return next(new appError("There is no user with this id",404))
+  }
   if (user.user_role == "manager"){
     req.user = decoded.id
     return next()
@@ -221,11 +224,11 @@ exports.protect = catchAsync(async (req, res, next) => {
   const auth = user.Auth
 
   if (!auth) {
-    return next(new appError("Cant find this user", 400))
+    return next(new appError("Cant find auth for this user", 404))
   }
 
   if (!auth.refreshToken) {
-    return next(new appError("The user dont logged in", 400))
+    return next(new appError("The user dont logged in", 401))
   }
 
   req.user = decoded.id
@@ -242,7 +245,7 @@ exports.forgrtPassword = catchAsync(async (req, res, next) => {
     include: Auth
   })
   if (!user) {
-    return next(new appError("cant find user", 400))
+    return next(new appError("cant find user", 404))
   }
   const auth = user.Auth
 
@@ -272,7 +275,7 @@ exports.forgrtPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = catchAsync(async (req, res, next) => {
   let token = req.params?.token
   if (!token) {
-    return next(new appError("there is no token send", 400))
+    return next(new appError("There is no token send", 400))
   }
   token = crypto
     .createHash('sha256')
@@ -288,7 +291,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   if (token != auth.passwordResetToken) {
     auth.passwordResetToken = null
     auth.save()
-    return next(new appError("token doesnt match user token!", 400))
+    return next(new appError("token doesnt match user token!", 401))
   }
   auth.passwordResetToken = null
   auth.password = await bcrypt.hash(req.body.password, 12)
@@ -313,6 +316,6 @@ exports.allowedTo = (...roles) => {
     if (roles.includes(user.user_role))
       next()
     else
-      return next(new appError("This route dont allowed for this user!", 400))
+      return next(new appError("This route dont allowed for this user!", 403))
   }
 }
