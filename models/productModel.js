@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
 const Category = require("./categoryModel")
-const CartItem = require("./cartItemModel")
+
 const Product = sequelize.define("Product", {
   name: {
     type: DataTypes.STRING,

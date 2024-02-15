@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
 const Product = require("./productModel")
-const Cart = require("./cartModel")
 
 const CartItem = sequelize.define("CartItem", {
   quantity: {
@@ -18,7 +17,6 @@ const CartItem = sequelize.define("CartItem", {
 }, {
   timestamps: true
 })
-
 
 Product.hasMany(CartItem, { foreignKey: "product_id" })
 CartItem.belongsTo(Product, { foreignKey: "product_id" })
