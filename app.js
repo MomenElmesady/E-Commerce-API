@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const hpp = require('hpp');
 const xss = require('xss-clean');
+const cors = require("cors")
 // routers
 const addressRouter = require("./routes/addressRouter")
 const userRouter = require("./routes/userRouter")
@@ -21,6 +22,7 @@ const reviewRouter = require("./routes/reviewRouter")
 
 const app = express();
 
+app.use(cors())
 // Apply rate limiting middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
