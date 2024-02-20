@@ -1,52 +1,58 @@
-const appError = require("../utils/appError")
-const catchAsync = require("../utils/catchAsync")
+const appError = require("../utils/appError");
+const catchAsync = require("../utils/catchAsync");
 
 exports.deleteOne = Model =>
   catchAsync(async (req, res, next) => {
     const result = await Model.destroy({
       where: {
-        id: req.params.id
-      }
-    })
-    if (result == 0) {
-      return next(new appError("Error On Deleting! May be there is no row with this id", 404))
+        id: req.params.id,
+      },
+    });
+
+    if (result === 0) {
+      return next(new appError("Error deleting! No row found with this ID", 404));
     }
+
     res.status(200).json({
       status: "success",
       message: 'Deleted successfully',
-    })
-  })
+    });
+  });
 
 exports.getAll = Model =>
   catchAsync(async (req, res, next) => {
-    const data = await Model.findAll()
-    // response 
+    const data = await Model.findAll();
+
     res.status(200).json({
       status: "success",
-      data
-    })
-  })
+      data,
+    });
+  });
 
 exports.getOne = Model =>
   catchAsync(async (req, res, next) => {
-    const data = await Model.findByPk(req.params.id)
+    const data = await Model.findByPk(req.params.id);
+
     if (!data) {
-      return next(new appError("There  is no row with this id", 404))
+      return next(new appError("No row found with this ID", 404));
     }
+
     res.status(200).json({
       status: "success",
-      data
-    })
-  })
+      data,
+    });
+  });
 
 exports.createOne = Model =>
   catchAsync(async (req, res, next) => {
-    const data = await Model.create(req.body)
+    console.log(req.body)
+    const data = await Model.create(req.body);
+
     res.status(201).json({
       status: "success",
-      data
-    })
-  })
+      data,
+    });
+  });
 
 exports.updateOne = Model =>
   catchAsync(async (req, res, next) => {
@@ -56,11 +62,13 @@ exports.updateOne = Model =>
         where: { id: req.params.id },
       }
     );
+
     if (result[0] === 0) {
-      return next(new appError("There is no row with this Id ", 404));
+      return next(new appError("No row found with this ID", 404));
     }
+
     res.status(200).json({
       status: "success",
       message: 'Updated successfully',
     });
-  })
+  });

@@ -3,6 +3,10 @@ const router = express.Router()
 const userController = require("../constrollers/userController")
 const authController = require("../constrollers/authController")
 
+router.get("/me",authController.protect,userController.getMe,userController.getUser)
+router.patch("/updateMe",authController.protect,userController.updateMe)
+router.patch("/updatePassword",authController.protect,userController.updatePassword)
+
 router.route("/").post(userController.createUser)
 .get(userController.getAllUsers)
 

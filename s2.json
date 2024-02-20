@@ -38,9 +38,6 @@
   "paths": {
     "/api/v1/users": {
       "get": {
-        "tags": [
-          "users"
-        ],
         "summary": "Get a list of users",
         "description": "Returns a list of users.",
         "responses": {
@@ -56,9 +53,6 @@
         }
       },
       "post": {
-        "tags": [
-          "users"
-        ],
         "summary": "Create a new user",
         "description": "Creates a new user. \n Email should be unique and address_id should belong to an actual existing address\nthe default role is user",
         "parameters": [
@@ -90,11 +84,8 @@
         }
       }
     },
-    "/api/v1/users/me": {
-      "get": {
-        "tags": [
-          "users"
-        ],
+    "/api/v1/users/me":{
+      "get":{
         "summary": "Get Me ",
         "description": "For user to git his page",
         "parameters": [
@@ -127,12 +118,9 @@
         }
       }
     },
-    "/api/v1/users/updateMe": {
-      "patch": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Update Me ",
+    "/api/v1/users/updateMe":{
+      "get":{
+        "summary": "Get Me ",
         "description": "For user to update his data and send any property he want to update",
         "parameters": [
           {
@@ -149,12 +137,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "phone_number": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/User"
             }
           }
         ],
@@ -177,11 +160,8 @@
         }
       }
     },
-    "/api/v1/users/updatePassword": {
-      "patch": {
-        "tags": [
-          "users"
-        ],
+    "/api/v1/users/updatePassword":{
+      "get":{
         "summary": "Update password ",
         "description": "For user to update his password",
         "parameters": [
@@ -201,10 +181,10 @@
             "schema": {
               "type": "object",
               "properties": {
-                "currentPassword": {
+                "currentPassword":{
                   "type": "string"
                 },
-                "newPassword": {
+                "newPassword":{
                   "type": "string"
                 }
               }
@@ -229,12 +209,10 @@
           }
         }
       }
-    },
+    }
+    ,
     "/api/v1/users/{id}": {
       "delete": {
-        "tags": [
-          "users"
-        ],
         "summary": "Delete User (don't delete me)",
         "description": "Delete any user",
         "parameters": [
@@ -271,9 +249,6 @@
         }
       },
       "patch": {
-        "tags": [
-          "users"
-        ],
         "summary": "Update User (don't update me)",
         "description": "Update any user",
         "parameters": [
@@ -313,9 +288,6 @@
         }
       },
       "get": {
-        "tags": [
-          "users"
-        ],
         "summary": "Get User",
         "description": "Returns a list of users.",
         "parameters": [
@@ -349,7 +321,6 @@
     },
     "/api/v1/auths/signUp": {
       "post": {
-        "tags": ["auths"],
         "summary": "Send when user sign up",
         "description": "Send user data and then verification token will be send to user email ",
         "parameters": [
@@ -383,7 +354,6 @@
     },
     "/api/v1/auths/verify/{token}": {
       "post": {
-        "tags": ["auths"],
         "summary": "Verify",
         "description": "send the token through url parameters and send user email in body",
         "parameters": [
@@ -412,6 +382,7 @@
         "responses": {
           "200": {
             "description": "A successful response",
+            
             "schema": {
               "$ref": "#/definitions/UserLoggedInResponse"
             }
@@ -430,7 +401,6 @@
     },
     "/api/v1/auths/sendVerification": {
       "post": {
-        "tags": ["auths"],
         "summary": "Send verification",
         "description": "Send other verification to email",
         "parameters": [
@@ -469,7 +439,6 @@
     },
     "/api/v1/auths/login": {
       "post": {
-        "tags": ["auths"],
         "summary": "Login",
         "description": "Login user -- send email and password\nif the user is manager dont pass any password",
         "parameters": [
@@ -493,6 +462,7 @@
         "responses": {
           "200": {
             "description": "A successful response",
+            
             "schema": {
               "$ref": "#/definitions/UserLoggedInResponse"
             }
@@ -523,7 +493,6 @@
     },
     "/api/v1/auths/forgotPassword": {
       "post": {
-        "tags": ["auths"],
         "summary": "ForgotPassword",
         "description": "Send user email which forgot his password and passwordResetToken will be send to email",
         "parameters": [
@@ -568,7 +537,6 @@
     },
     "/api/v1/auths/resetPassword/{token}": {
       "patch": {
-        "tags": ["auths"],
         "summary": "ResetPassword",
         "description": "Send password-reset-token which send to user email in url parameters and email and new password in body for reset password",
         "parameters": [
@@ -600,6 +568,7 @@
         "responses": {
           "200": {
             "description": "A successful response",
+            
             "schema": {
               "$ref": "#/definitions/UserLoggedInResponse"
             }
@@ -630,8 +599,7 @@
     },
     "/api/v1/auths/logout": {
       "post": {
-        "tags": ["auths"],
-        "summary": "Refresh Token",
+        "summary": "Logout",
         "description": "Send email in body and refreshToken in cookie",
         "parameters": [
           {
@@ -690,7 +658,6 @@
     },
     "/api/v1/auths/refreshToken": {
       "get": {
-        "tags": ["auths"],
         "summary": "Logout",
         "description": "Send email in body and refreshToken in cookie",
         "responses": {
@@ -725,7 +692,6 @@
     },
     "/api/v1/addresses": {
       "get": {
-        "tags": ["addresses"],
         "summary": "Get all addresses",
         "description": "Get all addresses.",
         "responses": {
@@ -741,7 +707,6 @@
         }
       },
       "post": {
-        "tags": ["addresses"],
         "summary": "Create a new address",
         "description": "Creates a new address.",
         "parameters": [
@@ -769,7 +734,6 @@
     },
     "/api/v1/addresses/{id}": {
       "get": {
-        "tags": ["addresses"],
         "summary": "Get an address by ID",
         "description": "Returns an address by ID.",
         "parameters": [
@@ -801,7 +765,6 @@
         }
       },
       "delete": {
-        "tags": ["addresses"],
         "summary": "Delete an address by ID",
         "description": "Deletes an address by ID.",
         "parameters": [
@@ -830,7 +793,6 @@
         }
       },
       "patch": {
-        "tags": ["addresses"],
         "summary": "Update an address by ID",
         "description": "Updates an address by ID.",
         "parameters": [
@@ -872,7 +834,6 @@
     },
     "/api/v1/users/usersIn/{addressId}": {
       "get": {
-        "tags": ["users"],
         "summary": "Get a list of users in a specific address",
         "description": "Returns a list of users.",
         "parameters": [
@@ -906,7 +867,6 @@
     },
     "/api/v1/categories": {
       "get": {
-        "tags": ["categories"],
         "summary": "Get all categories",
         "description": "Get all categories.",
         "responses": {
@@ -922,7 +882,6 @@
         }
       },
       "post": {
-        "tags": ["categories"],
         "summary": "Create a new category",
         "description": "Creates a new category.",
         "parameters": [
@@ -950,7 +909,6 @@
     },
     "/api/v1/categories/{id}": {
       "get": {
-        "tags": ["categories"],
         "summary": "Get a category by ID",
         "description": "Returns a category by ID.",
         "parameters": [
@@ -982,7 +940,6 @@
         }
       },
       "delete": {
-        "tags": ["categories"],
         "summary": "Delete a category by ID",
         "description": "Deletes a category by ID.",
         "parameters": [
@@ -1011,7 +968,6 @@
         }
       },
       "patch": {
-        "tags": ["categories"],
         "summary": "Update a category by ID",
         "description": "Updates a category by ID.",
         "parameters": [
@@ -1053,7 +1009,6 @@
     },
     "/api/v1/products/category/{categoryId}": {
       "get": {
-        "tags": ["products"],
         "summary": "Get products for specific category",
         "description": "Send Category id in url parameters and you will recieve array of products",
         "parameters": [
@@ -1129,7 +1084,6 @@
     },
     "/api/v1/products/search": {
       "get": {
-        "tags": ["products"],
         "summary": "Search in products",
         "description": "Send any key[q] in query and it will return all products math this key",
         "parameters": [
@@ -1157,7 +1111,6 @@
     },
     "/api/v1/products/getProductsForUser/{userId}": {
       "get": {
-        "tags": ["products"],
         "summary": "Get all products related to specific user",
         "description": "Get all products related to specific user by send id in url parameters ",
         "parameters": [
@@ -1191,7 +1144,6 @@
     },
     "/api/v1/products": {
       "get": {
-        "tags": ["products"],
         "summary": "Get all products",
         "description": "Get all products",
         "responses": {
@@ -1207,7 +1159,6 @@
         }
       },
       "post": {
-        "tags": ["products"],
         "summary": "Create Product",
         "description": "To create a product, login as manager, pass accessToken in headers, and upload a photo if needed.",
         "consumes": [
@@ -1283,7 +1234,6 @@
     },
     "/api/v1/products/{id}": {
       "get": {
-        "tags": ["products"],
         "summary": "Get Specific Product",
         "description": "Get Product by send its id in url parameters",
         "parameters": [
@@ -1315,7 +1265,6 @@
         }
       },
       "patch": {
-        "tags": ["products"],
         "summary": "Update Product",
         "description": "To update a product, login as a manager, pass accessToken in headers, and upload a photo if needed.",
         "consumes": [
@@ -1396,7 +1345,6 @@
         }
       },
       "delete": {
-        "tags": ["products"],
         "summary": "Delete Product",
         "description": "To Delete a product, login as a manager, pass accessToken in headers pass id in url",
         "consumes": [
@@ -1449,7 +1397,6 @@
     },
     "/api/v1/carts/showCart": {
       "get": {
-        "tags": ["carts"],
         "summary": "Show User Cart",
         "description": "Show the logged-in user cart pass auth in headers",
         "parameters": [
@@ -1479,54 +1426,8 @@
         }
       }
     },
-    "/api/v1/carts/updateCartItem/{cartItemId}": {
-      "get": {
-        "tags": ["carts"],
-        "summary": "Update cartItem",
-        "description": "Pass the quantity in body and should be logged in",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer Token",
-            "type": "string"
-          },
-          {
-            "name": "Product",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "quantity": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A successful response",
-            "schema": {
-              "$ref": "#/definitions/SuccessMessage"
-            }
-          },
-          "404": {
-            "description": "Not Found Error!",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
     "/api/v1/carts/showPrice": {
       "get": {
-        "tags": ["carts"],
         "summary": "Show Price Of Cart",
         "description": "Show the logged-in user cart-price pass auth in headers",
         "parameters": [
@@ -1573,7 +1474,6 @@
     },
     "/api/v1/carts/addToCart/{productId}": {
       "post": {
-        "tags": ["carts"],
         "summary": "Add To Cart",
         "description": "Add product to cart with default quantity 1 pass auth in headers",
         "parameters": [
@@ -1611,7 +1511,6 @@
     },
     "/api/v1/carts/deleteFromCart/{cartItemId}": {
       "post": {
-        "tags": ["carts"],
         "summary": "Delete Cart Item",
         "description": "Delete cart item pass auth in headers and cartItemId in url parameters",
         "parameters": [
@@ -1649,7 +1548,6 @@
     },
     "/api/v1/carts/{id}": {
       "get": {
-        "tags": ["carts"],
         "summary": "Get Cart",
         "description": "Get cart is allowed for manger only",
         "parameters": [
@@ -1719,7 +1617,6 @@
     },
     "/api/v1/carts": {
       "get": {
-        "tags": ["carts"],
         "summary": "Get All Carts",
         "description": "Get all carts is allowed for manger only",
         "parameters": [
@@ -1786,7 +1683,6 @@
     },
     "/api/v1/orders/checkOut": {
       "post": {
-        "tags": ["orders"],
         "summary": "Check-Out",
         "description": "CheckOut only pass method in body and token in headers",
         "parameters": [
@@ -1830,9 +1726,8 @@
         }
       }
     },
-    "/api/v1/orders/getOrderState/{orderId}": {
+    "/api/v1/orders/getOrderState/34": {
       "get": {
-        "tags": ["orders"],
         "summary": "Order-State",
         "description": "get order state pass the id in url only",
         "parameters": [
@@ -1863,8 +1758,7 @@
       }
     },
     "/api/v1/orders/recieveOrder/{orderId}": {
-      "post": {
-        "tags": ["orders"],
+      "get": {
         "summary": "Recieve-Order",
         "description": "recieve order pass the id in url only",
         "parameters": [
@@ -1902,7 +1796,6 @@
     },
     "/api/v1/orders": {
       "get": {
-        "tags": ["orders"],
         "summary": "Get All Orders",
         "description": "Get All Orders",
         "responses": {
@@ -1920,7 +1813,6 @@
     },
     "/api/v1/orders/{id}": {
       "get": {
-        "tags": ["orders"],
         "summary": "Get Order",
         "description": "Get Order pass id in url",
         "parameters": [
@@ -1950,7 +1842,6 @@
         }
       },
       "delete": {
-        "tags": ["orders"],
         "summary": "Delete Order",
         "description": "Delete Order pass id in url",
         "parameters": [
@@ -1982,7 +1873,6 @@
     },
     "/api/v1/orders/getUserOrders/{userId}": {
       "get": {
-        "tags": ["orders"],
         "summary": "Get Orders of user",
         "description": "get user orders",
         "parameters": [
@@ -2014,7 +1904,6 @@
     },
     "/api/v1/orders/deleteFromOrder/{orderId}/{orderItemId}": {
       "delete": {
-        "tags": ["orders"],
         "summary": "Delete From Order",
         "description": "Delete from order pass order id and orderItem id",
         "parameters": [
@@ -2057,9 +1946,8 @@
         }
       }
     },
-    "/api/v1/products/{productId}/review": {
+    "/api/v1/product/{productId}/review": {
       "post": {
-        "tags": ["reviews"],
         "summary": "Create Review ",
         "description": "Create review on product pass product id and token, the user should buy and recieve the product",
         "parameters": [
@@ -2120,9 +2008,10 @@
             "description": "Internal Server Error"
           }
         }
-      },
+      }
+    },
+    "/api/v1/products/{productId}/review": {
       "get": {
-        "tags": ["reviews"],
         "summary": "Get Product Reviews",
         "description": "Get Product Reviews pass only the id in url",
         "parameters": [
@@ -2154,7 +2043,6 @@
     },
     "/api/v1/products/{productId}/review/getAverageRating": {
       "get": {
-        "tags": ["reviews"],
         "summary": "Get Product AverageRating",
         "description": "Get Product AverageRating pass only the id in url",
         "parameters": [
@@ -2212,9 +2100,8 @@
         }
       }
     },
-    "/api/v1/products/{productId}/review/{id}": {
+    "/api/v1/products/12/review/{id}": {
       "get": {
-        "tags": ["reviews"],
         "summary": "Get Review ",
         "description": "Get review pass id in url",
         "parameters": [
@@ -2244,7 +2131,6 @@
         }
       },
       "delete": {
-        "tags": ["reviews"],
         "summary": "Delete Review ",
         "description": "Delete review pass id in url",
         "parameters": [
@@ -2280,7 +2166,6 @@
         }
       },
       "patch": {
-        "tags": ["reviews"],
         "summary": "Update Review ",
         "description": "Update review pass id in url",
         "parameters": [
@@ -3022,7 +2907,14 @@
           "format": "int64",
           "example": 1
         }
-      }
+      },
+      "required": [
+        "user_name",
+        "email",
+        "user_role",
+        "phone_number",
+        "address_id"
+      ]
     },
     "UserResponse": {
       "type": "object",

@@ -1,77 +1,119 @@
-const CartItem = require("../models/cartItemModel")
-const Cart = require("../models/cartModel")
-const Product = require("../models/productModel")
-const catchAsync = require("../utils/catchAsync")
-const sequelize = require("sequelize")
-const handlerFactory = require("./handlerFactory")
-const appError = require("../utils/appError")
-const User = require("../models/userModel")
-
+const CartItem = require("../models/cartItemModel");
+const Cart = require("../models/cartModel");
+const Product = require("../models/productModel");
+const catchAsync = require("../utils/catchAsync");
+const sequelize = require("sequelize");
+const handlerFactory = require("./handlerFactory");
+const appError = require("../utils/appError");
+const User = require("../models/userModel");
 
 exports.addToCart = catchAsync(async (req, res, next) => {
   const cart = await Cart.findOne({
     where: {
-      user_id: req.user
-    }
-  })
+      user_id: req.user,
+    },
+  });
+
   if (!cart) {
-    return next(new appError("Cant find cart for this user", 404))
+    return next(new appError("Cart not found for this user", 404));
   }
-  const cartItem = await CartItem.create({
-    quantity: req.body.quantity || 1,
-    product_id: req.params.productId,
-    cart_id: cart.id
-  })
+
+  let cartItem = await CartItem.findOne({
+    where: {
+      product_id: req.params.productId,
+      cart_id: cart.id,
+    },
+  });
+
+  if (cartItem) {
+    cartItem.quantity += req.body.quantity || 1;
+    cartItem.save();
+  } else {
+    cartItem = await CartItem.create({
+      quantity: req.body.quantity || 1,
+      product_id: req.params.productId,
+      cart_id: cart.id,
+    });
+  }
+
   res.status(200).json({
     status: "success",
-    data: cartItem
-  })
-})
+    data: cartItem,
+  });
+});
 
 exports.deleteFromCart = catchAsync(async (req, res, next) => {
   const cartItem = await CartItem.findOne({
     where: {
-      id: req.params.cartItemId
+      id: req.params.cartItemId,
     },
     include: {
       model: Cart,
-      where: { user_id: req.user }
-    }
-  })
+      where: { user_id: req.user },
+    },
+  });
+
   if (!cartItem) {
-    return next(new appError("Cart item not found or doesn't belong to the user", 404))
+    return next(new appError("Cart item not found or doesn't belong to the user", 404));
   }
-  await cartItem.destroy()
+
+  await cartItem.destroy();
+
   res.status(200).json({
     status: "success",
-    message: "deleted successfully",
-  })
-})
+    message: "Item deleted successfully",
+  });
+});
 
-exports.showCart = catchAsync(async (req, res, next) => {
-  let user = await User.findByPk(req.user)
-  if (!user){
-    return next(new appError("There is no user with this id",404))
-  }
+exports.updateCartItem = catchAsync(async (req, res, next) => {
+  const cartItem = await CartItem.findByPk(req.params.orderItemId);
   const cart = await Cart.findOne({
     where: {
-      user_id: req.user
+      user_id: req.user,
+    },
+  });
+
+  if (cart.id !== cartItem.cart_id) {
+    return next(new appError("Cart item does not belong to this user", 403));
+  }
+
+  cartItem.quantity = req.body.quantity;
+  cartItem.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Item updated successfully",
+  });
+});
+
+exports.showCart = catchAsync(async (req, res, next) => {
+  let user = await User.findByPk(req.user);
+
+  if (!user) {
+    return next(new appError("User not found", 404));
+  }
+
+  const cart = await Cart.findOne({
+    where: {
+      user_id: req.user,
     },
     include: {
       model: CartItem,
-      include: Product
-    }
-  })
+      include: Product,
+    },
+  });
+
   if (!cart) {
-    return next(new appError("There is no cart for this user!!!", 404))
+    return next(new appError("Cart not found for this user", 404));
   }
+
   res.status(200).json({
     status: "success",
-    data: cart
-  })
-})
+    data: cart,
+  });
+});
 
-exports.showPrice = (async (req, res, next) => {
+exports.showPrice = catchAsync(async (req, res, next) => {
   const result = await CartItem.findOne({
     attributes: [
       [
@@ -93,15 +135,16 @@ exports.showPrice = (async (req, res, next) => {
     group: ['Cart.id'],
     raw: true,
   });
+
   if (!result || !result.total_price) {
-    // Handle the case where there are no items in the cart
-    return next(new appError("No items in the cart or cart not found", 404))
+    return next(new appError("No items in the cart or cart not found", 404));
   }
+
   res.status(200).json({
     status: "success",
-    price: result
-  })
-})
+    price: result,
+  });
+});
 
-exports.getCart = handlerFactory.getOne(Cart)
-exports.getAllCarts = handlerFactory.getAll(Cart)
+exports.getCart = handlerFactory.getOne(Cart);
+exports.getAllCarts = handlerFactory.getAll(Cart);

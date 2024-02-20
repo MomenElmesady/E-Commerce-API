@@ -37,7 +37,7 @@ exports.getOrder = catchAsync(async (req, res, next) => {
     ]
   })
   if (!order) {
-    return next(new appError("There is no order with this id", 404))
+    return next(new appError("No order found with this ID", 404));
   }
   res.status(200).json({
     status: "success",
@@ -67,7 +67,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     });
 
     if (!cart || cartItems.length === 0) {
-      throw new appError("The cart is empty or invalid", 404);
+      return next(appError("The cart is empty or invalid", 404));
     }
 
     const order = await createOrder(req.user, cart, transaction);
