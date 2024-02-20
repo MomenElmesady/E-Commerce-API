@@ -67,7 +67,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     });
 
     if (!cart || cartItems.length === 0) {
-      throw new appError("The cart is empty or invalid", 403);
+      throw new appError("The cart is empty or invalid", 404);
     }
 
     const order = await createOrder(req.user, cart, transaction);
@@ -107,9 +107,13 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
 
   try {
     // Check if the order exists
-    const existingOrder = await Order.findByPk(orderId, { transaction });
+    const existingOrder = await Order.findOne({
+      id: orderId,
+      user_id: req.user
+    },
+      { transaction });
     if (!existingOrder) {
-      throw new appError("Order not found", 404);
+      throw new appError("Order not found or dont belong to this user", 404);
     }
 
     // Check if orderState, payment, and orderItems exist (optional, depending on your business logic)
@@ -208,10 +212,6 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
     },
     include: [
       {
-        model: User,
-        attributes: ['id', 'user_name', 'email'],
-      },
-      {
         model: OrderItem,
         include: [
           {
@@ -251,7 +251,7 @@ exports.recieveOrder = catchAsync(async (req, res, next) => {
     return next(new appError("There is no state for this order", 404));
   }
   if (orderState.state === "recieved") {
-    return next(new appError("The order is already received", 401));
+    return next(new appError("The order is already received", 400));
   }
 
   const transaction = await sequelize.transaction();
@@ -301,10 +301,10 @@ exports.recieveOrder = catchAsync(async (req, res, next) => {
 exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   const orderId = req.params.orderId;
   const orderItemIds = req.params.orderItemIds.split(",");
-
   const order = await Order.findOne({
     where: {
       id: orderId,
+      user_id: req.user
     },
     include: {
       model: OrderState,
@@ -312,7 +312,7 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   });
 
   if (!order) {
-    return next(new appError("There is no order with this id", 404));
+    return next(new appError("There is no order with this id or dont belong to this user ", 404));
   }
 
   if (order.OrderState.state === "recieved") {
@@ -342,15 +342,20 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
       total -= orderItem.total_cost;
       await orderItem.destroy({ transaction });
     }
-
-    order.total = total;
-    await order.save({ transaction });
+    if (total == 0) {
+      await order.destroy({ transaction })
+    }
+    else {
+      order.total = total;
+      await order.save({ transaction });
+    }
 
     // Commit the transaction if everything is successful
     await transaction.commit();
 
     res.status(200).json({
-      order,
+      status: "success",
+      message: "OrderItem delete successfully"
     });
   } catch (error) {
     // If any error occurs, rollback the transaction

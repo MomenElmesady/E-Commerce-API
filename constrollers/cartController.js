@@ -5,6 +5,7 @@ const catchAsync = require("../utils/catchAsync")
 const sequelize = require("sequelize")
 const handlerFactory = require("./handlerFactory")
 const appError = require("../utils/appError")
+const User = require("../models/userModel")
 
 
 exports.addToCart = catchAsync(async (req, res, next) => {
@@ -14,7 +15,7 @@ exports.addToCart = catchAsync(async (req, res, next) => {
     }
   })
   if (!cart) {
-    return next(new appError("User cart not found", 404))
+    return next(new appError("Cant find cart for this user", 404))
   }
   const cartItem = await CartItem.create({
     quantity: req.body.quantity || 1,
@@ -48,6 +49,10 @@ exports.deleteFromCart = catchAsync(async (req, res, next) => {
 })
 
 exports.showCart = catchAsync(async (req, res, next) => {
+  let user = await User.findByPk(req.user)
+  if (!user){
+    return next(new appError("There is no user with this id",404))
+  }
   const cart = await Cart.findOne({
     where: {
       user_id: req.user

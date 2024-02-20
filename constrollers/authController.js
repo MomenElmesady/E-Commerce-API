@@ -8,17 +8,30 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 const { promisify } = require("util")
 
-const createToken = async (id) => {
-  return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN })
+const createToken = async (id, expiresIn) => {
+  return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn })
 }
 
 const createAndSendToken = async (user, auth, statusCode, res) => {
-  const refreshToken = await createToken(auth.user_id)
-  auth.refreshToken = refreshToken
-  auth.save()
-  res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 900000 })
-  const accessToken = await createToken(auth.user_id)
-  res.status(statusCode).json({ user, accessToken })
+  const refreshToken = await createToken(auth.user_id, '30d')
+
+  res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 })
+  const accessToken = await createToken(auth.user_id, '5m')
+  let userResponse = {
+    id: user.id,
+    user_name: user.user_name,
+    email: user.email,
+    user_role: user.user_role,
+    phone_number: user.phone_number,
+    address_id: user.address_id
+  }
+  res.status(statusCode).json({
+    status: "success",
+    data: {
+      user: userResponse,
+      accessToken
+    }
+  })
 }
 
 exports.signUp = catchAsync(async (req, res, next) => {
@@ -35,7 +48,10 @@ exports.signUp = catchAsync(async (req, res, next) => {
       .digest('hex')
   })
   try {
-    await sendEmail({ email: user.email, subject: `verify your email (for 10 minutes)`, token: verificationToken })
+    const verificationLink = `localhost:1020/api/v1/auths/verify//${verificationToken}`;
+    const text = `Click the following link to verify your email: ${verificationLink}`;
+
+    await sendEmail({ email: user.email, subject: `verify your email (for 10 minutes)`, token: text })
     res.status(200).json({
       status: "success",
       message: "token send to email"
@@ -82,6 +98,9 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
     },
     include: Auth
   })
+  if (!user) {
+    return next(new appError("Cant find this email", 404))
+  }
   const auth = user.Auth
   const verificationToken = crypto.randomBytes(32).toString('hex');
   auth.verificationToken = crypto
@@ -119,11 +138,25 @@ exports.login = catchAsync(async (req, res, next) => {
     include: Auth
   })
   if (!user) {
-    return next(new appError("There is no user with this email"))
+    return next(new appError("There is no user with this email", 404))
   }
-  if (user.user_role == "manager"){
+  if (user.user_role == "manager") {
     const accessToken = await createToken(user.id)
-    res.status(200).json({ user, accessToken })
+    let userResponse = {
+      id: user.id,
+      user_name: user.user_name,
+      email: user.email,
+      user_role: user.user_role,
+      phone_number: user.phone_number,
+      address_id: user.address_id
+    }
+    return res.status(200).json({
+      status: "success",
+      data: {
+        user: userResponse,
+        accessToken
+      }
+    })
   }
   if (!password) {
     return (next(new appError("should pass password", 400)))
@@ -138,7 +171,7 @@ exports.login = catchAsync(async (req, res, next) => {
 })
 
 exports.logout = catchAsync(async (req, res, next) => {
-  let refreshToken = res.cookies?.refreshToken
+  let refreshToken = req.cookies?.refreshToken
   if (!refreshToken) {
     return next(new appError("There is no refreshToken in cookie", 400))
   }
@@ -149,31 +182,23 @@ exports.logout = catchAsync(async (req, res, next) => {
     },
     include: Auth
   })
-  const auth = user.Auth
-  if (!auth.refreshToken) {
-    return next(new appError("the user dont have refresh token", 401))
+  if (!user) {
+    return next(new appError("Cant find user with this email", 404))
   }
-  if (refreshToken != auth.refreshToken) {
-    return next(new appError("Invalid Token", 401))
-  }
-  auth.refreshToken = ""
-  await auth.save()
+  res.clearCookie('refreshToken');
 
-  res.cookie("refreshToken", false, {
-    expired: new Date(Date.now() + 5 * 1000),
-    httpOnly: true
-  })
   res.status(200).json({
-    status: "success"
+    status: "success",
+    message: "LoggedOut successfully"
   })
 })
 
 exports.refreshToken = catchAsync(async (req, res, next) => {
-  let refreshToken = res.cookies?.refreshToken
+  let refreshToken = req.cookies.refreshToken
   if (!refreshToken) {
     return next(new appError("There is no refreshToken in cookie", 400))
   }
-  const auth = await Auth.findOne({
+  let auth = await Auth.findOne({
     where: {
       refreshToken
     }
@@ -187,7 +212,7 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
   } catch (err) {
     return next(new appError("invalid token", 401))
   }
-  const accessToken = await createToken(auth.id)
+  const accessToken = await createToken(auth.user_id, "5m")
   res.status(200).json({ accessToken })
 })
 
@@ -198,15 +223,14 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new appError("There is no token in bearer auth!", 401))
   }
   token = token.split(" ")[1]
-
-  if (token === "false") {
-    token = false
+  // for more security 
+  if (!req.cookies.refreshToken){
+    return next(new appError("There is no refreshToken in cookie!",401))
   }
-
   try {
     var decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
   } catch (err) {
-    return next(new appError("cant verify token", 401))
+    return next(new appError("Cant verify token", 401))
   }
   const user = await User.findOne({
     where: {
@@ -214,30 +238,25 @@ exports.protect = catchAsync(async (req, res, next) => {
     },
     include: Auth
   })
-  if (!user){
-    return next(new appError("There is no user with this id",404))
+  if (!user) {
+    return next(new appError("There is no user with this id", 404))
   }
-  if (user.user_role == "manager"){
+  if (user.user_role == "manager") {
     req.user = decoded.id
     return next()
   }
   const auth = user.Auth
-
+  // for development testing 
   if (!auth) {
     return next(new appError("Cant find auth for this user", 404))
   }
 
-  if (!auth.refreshToken) {
-    return next(new appError("The user dont logged in", 401))
-  }
-
   req.user = decoded.id
   next()
-
 })
 
 
-exports.forgrtPassword = catchAsync(async (req, res, next) => {
+exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     where: {
       email: req.body?.email
@@ -256,7 +275,14 @@ exports.forgrtPassword = catchAsync(async (req, res, next) => {
     .digest('hex')
   await auth.save()
   try {
-    await sendEmail({ email: user.email, subject: `verify your email (for 10 minutes)`, token: passwordResetToken })
+    const verificationLink = `localhost:1020/api/v1/auths/verify//${passwordResetToken}`;
+    const text = `Click the following link to verify your email: ${verificationLink}`;
+
+    await sendEmail({ email: user.email, subject: `verify your email (for 10 minutes)`, token: text })
+    res.status(200).json({
+      status: "success",
+      message: "token send to email"
+    })
     res.status(200).json({
       status: "success",
       message: "token send to email"
@@ -264,7 +290,7 @@ exports.forgrtPassword = catchAsync(async (req, res, next) => {
   } catch (err) {
     auth.verificationToken = null
     await auth.save()
-    res.status(400).json({
+    res.status(500).json({
       status: "fail",
       message: "cant send token",
       err: err.message
@@ -287,6 +313,9 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     },
     include: Auth
   })
+  if (!user) {
+    return next(new appError("There is no user with this email", 404))
+  }
   const auth = user.Auth
   if (token != auth.passwordResetToken) {
     auth.passwordResetToken = null
@@ -300,15 +329,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   createAndSendToken(user, auth, 200, res)
 })
 
-
-exports.test = catchAsync(async (req, res) => {
-  const user = await User.findOne({
-    where: {
-      email: "momen3@gmail.com"
-    }, include: Auth
-  })
-  res.json(user.auth)
-})
 
 exports.allowedTo = (...roles) => {
   return async (req, res, next) => {

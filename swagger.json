@@ -1,0 +1,3031 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "E-Commerce API",
+    "description": "E-Commerce secured API with all operations for orders, users, products, and categories",
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "host": "localhost:1020",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "E-Commerce",
+      "description": "API"
+    },
+    {
+      "name": "Addresses",
+      "description": "API for managing addresses"
+    },
+    {
+      "name": "Categories",
+      "description": "API for managing categories"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/users": {
+      "get": {
+        "summary": "Get a list of users",
+        "description": "Returns a list of users.",
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/UsersResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "description": "Creates a new user. \n Email should be unique and address_id should belong to an actual existing address\nthe default role is user",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "schema": {
+              "$ref": "#/definitions/UserResponse"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}": {
+      "delete": {
+        "summary": "Delete User (don't delete me)",
+        "description": "Delete any user",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error on deleting"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update User (don't update me)",
+        "description": "Update any user",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get User",
+        "description": "Returns a list of users.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/UserResponse"
+            }
+          },
+          "404": {
+            "description": "Can't Find this User",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/signUp": {
+      "post": {
+        "summary": "Send when user sign up",
+        "description": "Send user data and then verification token will be send to user email ",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error [may be error on sending the token to email]"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/verify/{token}": {
+      "post": {
+        "summary": "Verify",
+        "description": "send the token through url parameters and send user email in body",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "format": "cookie",
+                  "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYzQ2MjQ4MzQ5MzY3YjY0MzY3ZCIsImlhdCI6MTYwNjI4MzQ3MiwiZXhwIjoxNjA2MjgzNjcyfQ.Y-J38Z-gC0_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx; Max-Age=900000; HttpOnly"
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/UserLoggedInResponse"
+            }
+          },
+          "401": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/sendVerification": {
+      "post": {
+        "summary": "Send verification",
+        "description": "Send other verification to email",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error [may be error on sending the token to email]"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/login": {
+      "post": {
+        "summary": "Login",
+        "description": "Login user -- send email and password\nif the user is manager dont pass any password",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "format": "cookie",
+                  "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYzQ2MjQ4MzQ5MzY3YjY0MzY3ZCIsImlhdCI6MTYwNjI4MzQ3MiwiZXhwIjoxNjA2MjgzNjcyfQ.Y-J38Z-gC0_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx; Max-Age=900000; HttpOnly"
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/UserLoggedInResponse"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/forgotPassword": {
+      "post": {
+        "summary": "ForgotPassword",
+        "description": "Send user email which forgot his password and passwordResetToken will be send to email",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/resetPassword/{token}": {
+      "patch": {
+        "summary": "ResetPassword",
+        "description": "Send password-reset-token which send to user email in url parameters and email and new password in body for reset password",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string",
+                  "format": "cookie",
+                  "example": "refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYzQ2MjQ4MzQ5MzY3YjY0MzY3ZCIsImlhdCI6MTYwNjI4MzQ3MiwiZXhwIjoxNjA2MjgzNjcyfQ.Y-J38Z-gC0_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx-X7_J-P9Rj-X7_Nx; Max-Age=900000; HttpOnly"
+                }
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/UserLoggedInResponse"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/logout": {
+      "post": {
+        "summary": "Logout",
+        "description": "Send email in body and refreshToken in cookie",
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "cookie",
+            "description": "The refresh token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NjIsImlhdCI6MTcwODM4MDU3MSwiZXhwIjoxNzEwOTcyNTcxfQ.-c7gGAJwv_1xTHRhMhZiCU4-TMMgKEzia4nNFFFNi9Y"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/auths/refreshToken": {
+      "get": {
+        "summary": "Logout",
+        "description": "Send email in body and refreshToken in cookie",
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "cookie",
+            "description": "Description of the cookie",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accessToken": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Error from request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/addresses": {
+      "get": {
+        "summary": "Get all addresses",
+        "description": "Get all addresses.",
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/AddressesResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new address",
+        "description": "Creates a new address.",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Address"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Address created successfully",
+            "schema": {
+              "$ref": "#/definitions/AddressResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/addresses/{id}": {
+      "get": {
+        "summary": "Get an address by ID",
+        "description": "Returns an address by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/AddressResponse"
+            }
+          },
+          "404": {
+            "description": "Can't Find this Address",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an address by ID",
+        "description": "Deletes an address by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Error on deleting"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an address by ID",
+        "description": "Updates an address by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "address",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Address"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Can't Find this Address",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/usersIn/{addressId}": {
+      "get": {
+        "summary": "Get a list of users in a specific address",
+        "description": "Returns a list of users.",
+        "parameters": [
+          {
+            "name": "addressId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A successful response",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "404": {
+            "description": "Can't find address with this id"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "summary": "Get all categories",
+        "description": "Get all categories.",
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/CategoriesResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new category",
+        "description": "Creates a new category.",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Category"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Category created successfully",
+            "schema": {
+              "$ref": "#/definitions/CategoryResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/categories/{id}": {
+      "get": {
+        "summary": "Get a category by ID",
+        "description": "Returns a category by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/CategoryResponse"
+            }
+          },
+          "404": {
+            "description": "Can't Find this Category",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a category by ID",
+        "description": "Deletes a category by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category deleted successfully",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Error on deleting"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a category by ID",
+        "description": "Updates a category by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "category",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CategoryResponse"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Category updated successfully",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Can't Find this Category",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/category/{categoryId}": {
+      "get": {
+        "summary": "Get products for specific category",
+        "description": "Send Category id in url parameters and you will recieve array of products",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "minPrice",
+            "description": "Min Price",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maxPrice",
+            "description": "Max Price",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "SortedBy",
+            "description": "The field you want to sort by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "typeSort",
+            "description": "Sort DESC or ASC",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "description": "Number of Products in one page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "Number of page",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/search": {
+      "get": {
+        "summary": "Search in products",
+        "description": "Send any key[q] in query and it will return all products math this key",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "description": "Key for search",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/getProductsForUser/{userId}": {
+      "get": {
+        "summary": "Get all products related to specific user",
+        "description": "Get all products related to specific user by send id in url parameters ",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "description": "user_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductsResponse"
+            }
+          },
+          "404": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products": {
+      "get": {
+        "summary": "Get all products",
+        "description": "Get all products",
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductsResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Product",
+        "description": "To create a product, login as manager, pass accessToken in headers, and upload a photo if needed.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "required": true,
+            "type": "string",
+            "description": "The name of the product"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "required": true,
+            "type": "string",
+            "description": "The description of the product"
+          },
+          {
+            "name": "price",
+            "in": "formData",
+            "required": true,
+            "type": "integer",
+            "description": "The price of the product"
+          },
+          {
+            "name": "category_id",
+            "in": "formData",
+            "required": true,
+            "type": "integer",
+            "description": "The category ID of the product"
+          },
+          {
+            "name": "photo",
+            "in": "formData",
+            "type": "file",
+            "description": "The product photo to upload"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductResponse"
+            }
+          },
+          "401": {
+            "description": "Error in Auth",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Error Forbidden!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/{id}": {
+      "get": {
+        "summary": "Get Specific Product",
+        "description": "Get Product by send its id in url parameters",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Product Id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ProductResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Product",
+        "description": "To update a product, login as a manager, pass accessToken in headers, and upload a photo if needed.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Product id",
+            "type": "integer"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "type": "string",
+            "description": "The name of the product"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "type": "string",
+            "description": "The description of the product"
+          },
+          {
+            "name": "price",
+            "in": "formData",
+            "type": "integer",
+            "description": "The price of the product"
+          },
+          {
+            "name": "category_id",
+            "in": "formData",
+            "type": "integer",
+            "description": "The category ID of the product"
+          },
+          {
+            "name": "photo",
+            "in": "formData",
+            "type": "file",
+            "description": "The product photo to upload"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "401": {
+            "description": "Error in Auth",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Error Forbidden!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Product",
+        "description": "To Delete a product, login as a manager, pass accessToken in headers pass id in url",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Product id",
+            "type": "integer"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "401": {
+            "description": "Error in Auth",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Error Forbidden!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts/showCart": {
+      "get": {
+        "summary": "Show User Cart",
+        "description": "Show the logged-in user cart pass auth in headers",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/CartResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts/showPrice": {
+      "get": {
+        "summary": "Show Price Of Cart",
+        "description": "Show the logged-in user cart-price pass auth in headers",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "price": {
+                  "type": "object",
+                  "properties": {
+                    "total_price": {
+                      "type": "string",
+                      "example": "200"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts/addToCart/{productId}": {
+      "post": {
+        "summary": "Add To Cart",
+        "description": "Add product to cart with default quantity 1 pass auth in headers",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          },
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "Product Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/CartItemResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts/deleteFromCart/{cartItemId}": {
+      "post": {
+        "summary": "Delete Cart Item",
+        "description": "Delete cart item pass auth in headers and cartItemId in url parameters",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          },
+          {
+            "name": "cartItemId",
+            "in": "path",
+            "description": "CartItem Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts/{id}": {
+      "get": {
+        "summary": "Get Cart",
+        "description": "Get cart is allowed for manger only",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          },
+          {
+            "name": "cartId",
+            "in": "path",
+            "description": "Cart Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 7
+                    },
+                    "user_id": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "example": 60
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-02-05T20:51:38.000Z"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-02-05T20:51:38.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/carts": {
+      "get": {
+        "summary": "Get All Carts",
+        "description": "Get all carts is allowed for manger only",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 7
+                      },
+                      "user_id": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "example": 60
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-02-05T20:51:38.000Z"
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-02-05T20:51:38.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/checkOut": {
+      "post": {
+        "summary": "Check-Out",
+        "description": "CheckOut only pass method in body and token in headers",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "in": "body",
+            "description": "Body Check-Out",
+            "type": "string",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "method": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/CheckOutResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/getOrderState/34": {
+      "get": {
+        "summary": "Order-State",
+        "description": "get order state pass the id in url only",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/OrderStateResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/recieveOrder/{orderId}": {
+      "get": {
+        "summary": "Recieve-Order",
+        "description": "recieve order pass the id in url only",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "400": {
+            "description": "Request Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "summary": "Get All Orders",
+        "description": "Get All Orders",
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/OrdersResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{id}": {
+      "get": {
+        "summary": "Get Order",
+        "description": "Get Order pass id in url",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/OrderResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Order",
+        "description": "Delete Order pass id in url",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/getUserOrders/{userId}": {
+      "get": {
+        "summary": "Get Orders of user",
+        "description": "get user orders",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/UserOrderResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/orders/deleteFromOrder/{orderId}/{orderItemId}": {
+      "delete": {
+        "summary": "Delete From Order",
+        "description": "Delete from order pass order id and orderItem id",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          },
+          {
+            "name": "orderItemId",
+            "in": "path",
+            "description": "Order Id",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/product/{productId}/review": {
+      "post": {
+        "summary": "Create Review ",
+        "description": "Create review on product pass product id and token, the user should buy and recieve the product",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "Product Id",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Review",
+            "in": "body",
+            "description": "Review",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rate": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "description": {
+                  "type": "string",
+                  "example": "good"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ReviewResponse"
+            }
+          },
+          "403": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/{productId}/review": {
+      "get": {
+        "summary": "Get Product Reviews",
+        "description": "Get Product Reviews pass only the id in url",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "Product Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ReviewsResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/{productId}/review/getAverageRating": {
+      "get": {
+        "summary": "Get Product AverageRating",
+        "description": "Get Product AverageRating pass only the id in url",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "description": "Product Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "product_id": {
+                        "type": "integer",
+                        "example": 12
+                      },
+                      "averageRating": {
+                        "type": "string",
+                        "example": "1.0000"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "400": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/api/v1/products/12/review/{id}": {
+      "get": {
+        "summary": "Get Review ",
+        "description": "Get review pass id in url",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Review Id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/ReviewResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Review ",
+        "description": "Delete review pass id in url",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Review Id",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Review ",
+        "description": "Update review pass id in url",
+        "parameters": [
+          {
+            "name": "Review",
+            "in": "body",
+            "description": "Review",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rate": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "description": {
+                  "type": "string",
+                  "example": "good"
+                }
+              }
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Review Id",
+            "type": "string"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer Token",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response",
+            "schema": {
+              "$ref": "#/definitions/SuccessMessage"
+            }
+          },
+          "404": {
+            "description": "Not Found Error!",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ReviewsResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Review"
+          }
+        }
+      }
+    },
+    "ReviewResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Review"
+        }
+      }
+    },
+    "Review": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "example": 11
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2024-02-12T14:21:02.000Z"
+        },
+        "product_id": {
+          "type": "integer",
+          "example": 1
+        },
+        "user_id": {
+          "type": "integer",
+          "example": 62
+        },
+        "rate": {
+          "type": "integer",
+          "example": 1
+        },
+        "description": {
+          "type": "string",
+          "example": "good"
+        }
+      }
+    },
+    "UserOrderResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 4
+              },
+              "total": {
+                "type": "integer",
+                "example": 0
+              },
+              "date": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-02-07T15:46:13.000Z"
+              },
+              "user_id": {
+                "type": "integer",
+                "example": 61
+              },
+              "address_id": {
+                "type": "integer",
+                "example": 2
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-02-07T15:46:13.000Z"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-02-07T15:46:13.000Z"
+              },
+              "OrderItems": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 44
+                    },
+                    "quantity": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "price": {
+                      "type": "integer",
+                      "example": 15000
+                    },
+                    "total_cost": {
+                      "type": "integer",
+                      "example": 15000
+                    },
+                    "order_id": {
+                      "type": "integer",
+                      "example": 8
+                    },
+                    "product_id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-02-07T15:48:15.000Z"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2024-02-07T15:48:15.000Z"
+                    },
+                    "Product": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "laptop dell g5"
+                        },
+                        "price": {
+                          "type": "integer",
+                          "example": 15000
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "OrderState": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "example": 2
+                  },
+                  "state": {
+                    "type": "string",
+                    "example": "recieved"
+                  },
+                  "payment": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "order_id": {
+                    "type": "integer",
+                    "example": 4
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-02-07T15:46:13.000Z"
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-02-14T16:36:25.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "OrderResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 34
+            },
+            "total": {
+              "type": "integer",
+              "example": 200
+            },
+            "date": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-02-14T15:35:50.000Z"
+            },
+            "user_id": {
+              "type": "integer",
+              "example": 60
+            },
+            "address_id": {
+              "type": "integer",
+              "example": 2
+            },
+            "OrderState": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "example": 30
+                },
+                "state": {
+                  "type": "string",
+                  "example": "recieved"
+                },
+                "payment": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            },
+            "OrderItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "example": 96
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "price": {
+                    "type": "integer",
+                    "example": 200
+                  },
+                  "total_cost": {
+                    "type": "integer",
+                    "example": 200
+                  },
+                  "Product": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 12
+                      },
+                      "name": {
+                        "type": "string",
+                        "example": "x"
+                      },
+                      "description": {
+                        "type": "string",
+                        "example": "y"
+                      },
+                      "price": {
+                        "type": "integer",
+                        "example": 200
+                      },
+                      "category_id": {
+                        "type": "integer",
+                        "example": 1
+                      },
+                      "photo": {
+                        "type": "string",
+                        "example": "1707919557242-p.png"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "OrdersResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 4
+              },
+              "total": {
+                "type": "integer",
+                "example": 0
+              },
+              "date": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-02-07T15:46:13.000Z"
+              },
+              "user_id": {
+                "type": "integer",
+                "example": 61
+              },
+              "address_id": {
+                "type": "integer",
+                "example": 2
+              }
+            }
+          }
+        }
+      }
+    },
+    "OrderStateResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "example": 30
+            },
+            "state": {
+              "type": "string",
+              "example": "received"
+            },
+            "payment": {
+              "type": "boolean",
+              "example": true
+            },
+            "order_id": {
+              "type": "integer",
+              "example": 34
+            }
+          }
+        }
+      }
+    },
+    "CheckOutResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "object",
+                  "properties": {
+                    "val": {
+                      "type": "string",
+                      "example": "CURRENT_TIMESTAMP"
+                    }
+                  }
+                },
+                "id": {
+                  "type": "integer",
+                  "example": 35
+                },
+                "user_id": {
+                  "type": "integer",
+                  "example": 643
+                },
+                "address_id": {
+                  "type": "integer",
+                  "example": 2
+                },
+                "total": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2024-02-18T21:38:00.068Z"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2024-02-18T21:38:00.068Z"
+                }
+              }
+            },
+            "orderState": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "string",
+                  "example": "inProgress"
+                },
+                "payment": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "id": {
+                  "type": "integer",
+                  "example": 31
+                },
+                "order_id": {
+                  "type": "integer",
+                  "example": 35
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2024-02-18T21:38:00.088Z"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2024-02-18T21:38:00.088Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "CartItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "cart_id": {
+          "type": "integer"
+        },
+        "product_id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "Product": {
+          "$ref": "#/definitions/Product"
+        }
+      }
+    },
+    "Cart": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "CartItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CartItem"
+          }
+        }
+      }
+    },
+    "CartItemResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "quantity": {
+              "type": "integer"
+            },
+            "cart_id": {
+              "type": "integer"
+            },
+            "product_id": {
+              "type": "integer"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "CartResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "user_id": {
+              "type": "integer"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "CartItems": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CartItem"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Product": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "T-Shirt"
+        },
+        "description": {
+          "type": "string",
+          "example": "red t-shirt "
+        },
+        "price": {
+          "type": "integer",
+          "example": 100
+        },
+        "category_id": {
+          "type": "integer",
+          "example": 100
+        },
+        "photo": {
+          "type": "string",
+          "example": 100
+        },
+        "category": {
+          "type": "object",
+          "$ref": "#/definitions/Category"
+        }
+      }
+    },
+    "ProductsResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Product"
+          }
+        }
+      }
+    },
+    "ProductResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "$ref": "#/definitions/Product"
+        }
+      }
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "city": {
+          "type": "string",
+          "example": "New York"
+        },
+        "country": {
+          "type": "string",
+          "example": "USA"
+        }
+      },
+      "required": [
+        "city",
+        "country"
+      ]
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "user_name": {
+          "type": "string",
+          "example": "John Doe"
+        },
+        "email": {
+          "type": "string",
+          "example": "john@example.com"
+        },
+        "user_role": {
+          "type": "string",
+          "example": "admin"
+        },
+        "phone_number": {
+          "type": "string",
+          "example": "+1234567890"
+        },
+        "address_id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        }
+      },
+      "required": [
+        "user_name",
+        "email",
+        "user_role",
+        "phone_number",
+        "address_id"
+      ]
+    },
+    "UserResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/User"
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "UsersResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/User"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "UserLoggedInResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "type": "object",
+              "$ref": "#/definitions/User"
+            },
+            "accessToken": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "fail"
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "statusCode": {
+              "type": "integer",
+              "example": 404
+            },
+            "status": {
+              "type": "string",
+              "example": "Not Found"
+            },
+            "isOperational": {
+              "type": "boolean",
+              "example": true
+            }
+          }
+        },
+        "message": {
+          "type": "string",
+          "example": "Error message"
+        }
+      }
+    },
+    "SuccessMessage": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "message": {
+          "type": "string",
+          "example": "Operation successful"
+        }
+      }
+    },
+    "AddressResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/Address"
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "AddressesResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Address"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "Category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "example": "Electronics"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "CategoryResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "object",
+          "$ref": "#/definitions/Category"
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    },
+    "CategoriesResponse": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "example": "success"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Category"
+          }
+        }
+      },
+      "required": [
+        "status",
+        "data"
+      ]
+    }
+  }
+}

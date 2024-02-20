@@ -12,6 +12,6 @@ router.post("/checkOut",authController.protect,orderController.checkOut)
 router.get("/getOrderState/:orderId",orderController.getOrderState)
 router.post("/recieveOrder/:orderId",orderController.recieveOrder)
 router.get("/getUserOrders/:userId", orderController.getUserOrders)
-router.delete("/deleteFromOrder/:orderId/:orderItemIds",orderController.deleteFromOrder)
+router.delete("/deleteFromOrder/:orderId/:orderItemIds",authController.protect,orderController.deleteFromOrder)
 
 module.exports = router

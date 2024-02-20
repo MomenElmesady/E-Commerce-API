@@ -1,7 +1,7 @@
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
 
-exports.deleteOne = (Model) =>
+exports.deleteOne = Model =>
   catchAsync(async (req, res, next) => {
     const result = await Model.destroy({
       where: {
@@ -9,14 +9,13 @@ exports.deleteOne = (Model) =>
       }
     })
     if (result == 0) {
-      return next(new appError("Error On Deleting!"))
+      return next(new appError("Error On Deleting! May be there is no row with this id", 404))
     }
     res.status(200).json({
       status: "success",
       message: 'Deleted successfully',
     })
   })
-
 
 exports.getAll = Model =>
   catchAsync(async (req, res, next) => {
@@ -28,12 +27,11 @@ exports.getAll = Model =>
     })
   })
 
-
 exports.getOne = Model =>
   catchAsync(async (req, res, next) => {
     const data = await Model.findByPk(req.params.id)
     if (!data) {
-      return next(new appError("There  is no row with this id",404))
+      return next(new appError("There  is no row with this id", 404))
     }
     res.status(200).json({
       status: "success",
@@ -41,16 +39,14 @@ exports.getOne = Model =>
     })
   })
 
-
 exports.createOne = Model =>
   catchAsync(async (req, res, next) => {
     const data = await Model.create(req.body)
-    res.status(200).json({
+    res.status(201).json({
       status: "success",
       data
     })
   })
-
 
 exports.updateOne = Model =>
   catchAsync(async (req, res, next) => {
@@ -61,7 +57,7 @@ exports.updateOne = Model =>
       }
     );
     if (result[0] === 0) {
-      return next(new appError("There is no row with this ID ", 404));
+      return next(new appError("There is no row with this Id ", 404));
     }
     res.status(200).json({
       status: "success",

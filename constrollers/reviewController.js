@@ -14,10 +14,10 @@ const handlerFactory = require("./handlerFactory")
 //   const review = await Review.findByPk(req.params.reviewId);
 
 //   if (!review) {
-//     return next(new appError("There is no review with this ID", 400));
+//     return next(new appError("There is no review with this Id", 400));
 //   }
 
-//   if (review.user_id !== req.user) {
+//   if (review.user_Id !== req.user) {
 //     return next(new appError("This review does not belong to the user", 400));
 //   }
 
@@ -44,12 +44,12 @@ exports.updateReview = catchAsync(async (req, res, next) => {
   const updateDetails = await Review.update(
     req.body,
     {
-      where: { user_id: req.user, id: req.params.id },
+      where: { user_Id: req.user, Id: req.params.Id },
     }
   );
 
   if (updateDetails[0] === 0) {
-    return next(new appError("There is no review with this ID that belongs to the user", 404));
+    return next(new appError("There is no review with this Id that belongs to the user", 404));
   }
   res.status(200).json({
     status: "success",
@@ -60,8 +60,8 @@ exports.updateReview = catchAsync(async (req, res, next) => {
 // exports.deleteReview = catchAsync(async (req, res, next) => {
 //   const review = await Review.findByPk(req.params.reviewId)
 //   if (!review)
-//     return next(new appError("there is no review with this id", 400))
-//   if (review.user_id != req.user)
+//     return next(new appError("there is no review with this Id", 400))
+//   if (review.user_Id != req.user)
 //     return next(new appError("this review dont belong to the user", 400))
 //   // delete it 
 //   await review.destroy()
@@ -75,11 +75,11 @@ exports.updateReview = catchAsync(async (req, res, next) => {
 exports.deleteReview = catchAsync(async (req, res, next) => {
   const x = await Review.destroy({
     where: {
-      user_id: req.user, id: req.params.id,
+      user_Id: req.user, Id: req.params.Id,
     }
   })
   if (x == 0)
-    return next(new appError("There  is no review with this id belong to this user"))
+    return next(new appError("There  is no review with this Id belong to this user"))
 
   res.status(200).json({
     status: "success",
@@ -90,8 +90,8 @@ exports.deleteReview = catchAsync(async (req, res, next) => {
 exports.checkReviewExisting = catchAsync(async (req, res, next) => {
   const checkUserReview = await Review.findOne({
     where: {
-      user_id: req.user,
-      product_id: req.params.productId
+      user_Id: req.user,
+      product_Id: req.params.productId
     }
   })
   if (checkUserReview) {
@@ -103,12 +103,12 @@ exports.checkReviewExisting = catchAsync(async (req, res, next) => {
 exports.checkBuying = catchAsync(async (req, res, next) => {
   const orderItem = await OrderItem.findOne({
     where: {
-      product_id: req.params.productId
+      product_Id: req.params.productId
     },
     include: {
       model: Order,
       where: {
-        user_id: req.user
+        user_Id: req.user
       },
       include: {
         model: OrderState,
@@ -123,8 +123,8 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
 })
 
 exports.addToBodyReq = catchAsync(async (req, res, next) => {
-  req.body.product_id = req.params.productId,
-    req.body.user_id = req.user,
+  req.body.product_Id = req.params.productId,
+    req.body.user_Id = req.user,
     req.body.date = Date.now()
   next()
 })
@@ -133,7 +133,7 @@ exports.getProductReviews = catchAsync(async (req, res, next) => {
   const { productId } = req.params;
   const product = await Product.findOne({
     where: {
-      id: productId,
+      Id: productId,
     },
   });
   if (!product) {
@@ -141,7 +141,7 @@ exports.getProductReviews = catchAsync(async (req, res, next) => {
   }
   const reviews = await Review.findAll({
     where: {
-      product_id: productId
+      product_Id: productId
     }
   })
   res.status(200).json({
@@ -154,7 +154,7 @@ exports.getAverageRating = catchAsync(async (req, res, next) => {
   const { productId } = req.params;
   const product = await Product.findOne({
     where: {
-      id: productId,
+      Id: productId,
     },
   });
   if (!product) {
@@ -162,12 +162,12 @@ exports.getAverageRating = catchAsync(async (req, res, next) => {
   }
   const averageRating = await Review.findAll({
     where: {
-      product_id: productId
+      product_Id: productId
     },
     attributes: [
-      [sequelize.literal('product_id'), 'product_id'],
+      [sequelize.literal('product_Id'), 'product_Id'],
       [sequelize.fn("AVG", sequelize.literal("rate")), "averageRating"]],
-    group: ["product_id"]
+    group: ["product_Id"]
   })
   if (averageRating.length == 0) {
     return next(new appError("There is no reviews for this product", 400))

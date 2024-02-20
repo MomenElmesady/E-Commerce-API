@@ -5,8 +5,10 @@ router.post("/signUp", authController.signUp)
 router.post("/verify/:token", authController.verify)
 router.post("/sendVerification", authController.sendVerificationToken)
 router.post("/login", authController.login)
-router.post("/forgotPassword", authController.forgrtPassword)
+router.post("/forgotPassword", authController.forgotPassword)
 router.patch("/resetPassword/:token", authController.resetPassword)
+router.get("/refreshToken", authController.refreshToken)
 
-router.get("/test",authController.test)
+router.post("/logOut",authController.protect,authController.logout)
+
 module.exports = router

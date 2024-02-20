@@ -8,7 +8,7 @@ router.post("/deleteFromCart/:cartItemId", authController.protect, cartControlle
 router.get("/showCart", authController.protect, cartController.showCart)
 router.get("/showPrice", authController.protect, cartController.showPrice)
 
-router.route("/:id").get(cartController.getCart)
-router.route("/").get(cartController.getAllCarts)
+router.route("/:id").get(authController.protect,authController.allowedTo("manager"),cartController.getCart)
+router.route("/").get(authController.protect,authController.allowedTo("manager"),cartController.getAllCarts)
 
 module.exports = router

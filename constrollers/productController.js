@@ -7,9 +7,15 @@ const { Op } = require('sequelize');
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory")
 const sequelize = require("../sequelize")
+const appError = require("../utils/appError")
 
 // for AI analyses 
 exports.getProductsForUser = catchAsync(async (req, res, next) => {
+  let userId = req.params.userId
+  let user = await User.findByPk(userId)
+  if (!user) {
+    return next(new appError("There is no user with this id", 404))
+  }
   const productData = await OrderItem.findAll({
     attributes: [
       [sequelize.literal('user_id'), 'user_id'],
@@ -22,7 +28,7 @@ exports.getProductsForUser = catchAsync(async (req, res, next) => {
       {
         model: Order,
         attributes: [],
-        where: { user_id: req.user },
+        where: { user_id: userId },
         include: [
           {
             model: User,
@@ -77,7 +83,7 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
 })
 
 exports.searchInProducts = catchAsync(async (req, res, next) => {
-  const { q = "000000" } = req.query;
+  const { q = "0000" } = req.query;
   const products = await Product.findAll({
     where: {
       name: {
