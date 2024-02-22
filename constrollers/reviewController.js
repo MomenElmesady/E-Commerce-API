@@ -104,7 +104,7 @@ exports.getProductReviews = catchAsync(async (req, res, next) => {
 
   const reviews = await Review.findAll({
     where: {
-      id: productId
+      product_id: productId
     }
   });
 
