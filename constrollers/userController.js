@@ -3,8 +3,12 @@ const Address = require("../models/addressModel");
 const User = require("../models/userModel");
 const Auth = require("../models/authModel");
 const appError = require("../utils/appError");
+const sendEmail = require("../utils/sendEmail");
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory");
+const crypto = require("crypto");
+const sequelize = require("../sequelize")
+
 
 exports.getUsersInAddress = catchAsync(async (req, res, next) => {
   const addressId = req.params.addressId;
@@ -51,7 +55,6 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updateMe = catchAsync(async (req, res, next) => {
-  console.log("-------------------")
   const { user, body } = req;
 
   if (body.password) {
@@ -82,7 +85,6 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 });
 
 exports.updateUser = handlerFactory.updateOne(User);
-exports.createUser = handlerFactory.createOne(User);
 exports.getUser = handlerFactory.getOne(User);
 exports.deleteUser = handlerFactory.deleteOne(User);
 exports.getAllUsers = handlerFactory.getAll(User);

@@ -40,17 +40,28 @@ const createAndSendToken = async (user, auth, statusCode, res) => {
 
 exports.signUp = catchAsync(async (req, res, next) => {
   const { user_name, email, password, address_id, phone_number } = req.body;
-  let role = req.body.role || "user";
-  const user = await User.create({ user_name, email, role, address_id, phone_number });
-  const verificationToken = crypto.randomBytes(32).toString('hex');
-  const auth = await Auth.create({
-    user_id: user.id,
-    password,
-    verificationToken: crypto
-      .createHash('sha256')
-      .update(verificationToken)
-      .digest('hex'),
-  });
+  let user_role = req.body.user_role || "user";
+
+  const transaction = await sequelize.transaction();
+  try {
+    const user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    var auth = await Auth.create({
+      user_id: user.id,
+      password,
+      verificationToken: crypto
+        .createHash('sha256')
+        .update(verificationToken)
+        .digest('hex'),
+    }, {
+      transaction
+    });
+    await transaction.commit();
+  }
+  catch (err) {
+    await transaction.rollback();
+    return next(new appError(err.message, 400));
+  }
 
   try {
     const verificationLink = `localhost:1020/api/v1/auths/verify/${verificationToken}`;
@@ -155,25 +166,6 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new appError("No user found with this email", 404));
   }
 
-  if (user.user_role === "manager") {
-    const accessToken = await createToken(user.id);
-    let userResponse = {
-      id: user.id,
-      user_name: user.user_name,
-      email: user.email,
-      user_role: user.user_role,
-      phone_number: user.phone_number,
-      address_id: user.address_id,
-    };
-    return res.status(200).json({
-      status: "success",
-      data: {
-        user: userResponse,
-        accessToken,
-      },
-    });
-  }
-
   const auth = user.Auth;
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
 
@@ -207,7 +199,7 @@ exports.logout = catchAsync(async (req, res, next) => {
   if (refreshToken !== auth.refreshToken) {
     return next(new appError("Incorrect refreshToken", 403));
   }
-  auth.refreshToken = null 
+  auth.refreshToken = null
   auth.save()
   res.clearCookie('refreshToken');
 
@@ -257,9 +249,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new appError("No refreshToken in cookie!", 401));
   }
 
-  if (!req.cookies.refreshToken)
-  {
-    return next(new appError("No refreshToken found in cookie",400))
+  if (!req.cookies.refreshToken) {
+    return next(new appError("No refreshToken found in cookie", 400))
   }
 
   try {
@@ -278,11 +269,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (!user) {
     return next(new appError("No user found with this id", 404));
-  }
-
-  if (user.user_role === "manager") {
-    req.user = decoded.id;
-    return next();
   }
 
   const auth = user.Auth;
@@ -386,3 +372,4 @@ exports.allowedTo = (...roles) => {
     }
   };
 };
+

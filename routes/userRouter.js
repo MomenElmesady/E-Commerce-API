@@ -7,8 +7,7 @@ router.get("/me",authController.protect,userController.getMe,userController.getU
 router.patch("/updateMe",authController.protect,userController.updateMe)
 router.patch("/updatePassword",authController.protect,userController.updatePassword)
 
-router.route("/").post(userController.createUser)
-.get(userController.getAllUsers)
+router.route("/").get(userController.getAllUsers)
 
 router.route("/:id").get(userController.getUser)
 .delete(userController.deleteUser).patch(userController.updateUser)

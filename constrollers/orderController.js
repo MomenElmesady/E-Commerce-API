@@ -75,12 +75,12 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     const total = await calculateTotalCheckOut(orderItems);
 
     // Update order total and fetch the updated order details
-    await updateOrder(order.id, total, transaction);
-    const updatedOrder = await Order.findByPk(order.id, { transaction });
-
-    await deleteCartItems(cartItems, transaction);
     const orderState = await createOrderState(order.id, transaction);
-    const payment = await createPayment(method, order.id, req.user, transaction);
+
+    await updateOrder(order.id, total, transaction);
+    await Order.findByPk(order.id, { transaction });
+    await deleteCartItems(cartItems, transaction);
+    await createPayment(method, order.id, req.user, transaction);
 
     // If everything is successful, commit the transaction
     await transaction.commit();
@@ -89,10 +89,10 @@ exports.checkOut = catchAsync(async (req, res, next) => {
       status: "success",
       data: { order, orderState },
     });
-  } catch (error) {
+  } catch (err) {
     // If any error occurs, rollback the transaction
     await transaction.rollback();
-    next(error);
+    next(new appError(err.message,400));
   }
 });
 
