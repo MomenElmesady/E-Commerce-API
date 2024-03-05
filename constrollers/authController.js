@@ -44,7 +44,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   const transaction = await sequelize.transaction();
   try {
-    const user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
+    var user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
     const verificationToken = crypto.randomBytes(32).toString('hex');
     var auth = await Auth.create({
       user_id: user.id,
@@ -210,7 +210,7 @@ exports.logout = catchAsync(async (req, res, next) => {
 });
 
 exports.refreshToken = catchAsync(async (req, res, next) => {
-  let refreshToken = req.cookies.refreshToken;
+  let refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
     return next(new appError("No refreshToken found in cookie", 400));
@@ -248,7 +248,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   if (!req.cookies.refreshToken) {
     return next(new appError("No refreshToken in cookie!", 401));
   }
-
+  // more security 
   if (!req.cookies.refreshToken) {
     return next(new appError("No refreshToken found in cookie", 400))
   }
