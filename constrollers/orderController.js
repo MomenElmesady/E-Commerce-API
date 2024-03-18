@@ -10,6 +10,9 @@ const catchAsync = require("../utils/catchAsync")
 const Payment = require("../models/paymentModel")
 const handlerFactory = require("./handlerFactory")
 
+const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
+
+
 const { Op } = require('sequelize');
 const sequelize = require("../sequelize")
 
@@ -44,6 +47,34 @@ exports.getOrder = catchAsync(async (req, res, next) => {
     data: order
   })
 })
+
+exports.createCheckOutSession = catchAsync(async(req,res,next)=>{
+  const lineItems = []
+  const products = await Product.findAll()
+  for (i of products){
+    lineItems.push({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: i.name,
+          description: i.description,
+        },
+        unit_amount: i.price,
+      },
+      quantity: 1
+    })
+  }
+  let session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    line_items: lineItems,
+    success_url: `https://www.google.com/`,
+    cancel_url: `https://www.google.com/`
+  })
+  res.status(200).json({
+    session
+  })
+})  
 
 exports.checkOut = catchAsync(async (req, res, next) => {
   const transaction = await sequelize.transaction();

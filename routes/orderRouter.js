@@ -3,6 +3,8 @@ const orderController = require("../constrollers/orderController")
 const authController = require("../constrollers/authController")
 const router = express.Router()
 
+router.post("/create-checkout-session",orderController.createCheckOutSession)
+
 router.route("/").get(orderController.getAllOrders)
 router.route("/:id").get(orderController.getOrder)
 .patch(orderController.updateOrder)
