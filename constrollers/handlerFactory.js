@@ -23,10 +23,9 @@ exports.getAll = Model =>
   catchAsync(async (req, res, next) => {
     const data = await Model.findAll();
 
-    res.status(200).json({
-      status: "success",
+    res.status(200).json(
       data,
-    });
+    );
   });
 
 exports.getOne = Model =>
@@ -45,7 +44,9 @@ exports.getOne = Model =>
 
 exports.createOne = Model =>
   catchAsync(async (req, res, next) => {
-    console.log(req.body)
+    if (!req.body.country){
+      return next(new appError("Country Wanted",400))
+    }
     const data = await Model.create(req.body);
 
     res.status(201).json({
