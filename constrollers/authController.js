@@ -7,6 +7,7 @@ const appError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { promisify } = require("util");
+const sequelize = require("../sequelize")
 
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
@@ -38,14 +39,14 @@ const createAndSendToken = async (user, auth, statusCode, res) => {
   });
 };
 
-exports.signUp = catchAsync(async (req, res, next) => {
-  const { user_name, email, password, address_id, phone_number } = req.body;
+exports.signUp = (async (req, res, next) => {
+  var { user_name, email, password, address_id, phone_number } = req.body;
   let user_role = req.body.user_role || "user";
 
   const transaction = await sequelize.transaction();
   try {
     var user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    var verificationToken = crypto.randomBytes(32).toString('hex');
     var auth = await Auth.create({
       user_id: user.id,
       password,
@@ -62,14 +63,14 @@ exports.signUp = catchAsync(async (req, res, next) => {
     await transaction.rollback();
     return next(new appError(err.message, 400));
   }
-
+  
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify/${verificationToken}`;
+    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
-    await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
+    // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
       status: "success",
-      message: "Verification token sent to email",
+      message: text,
     });
   } catch (err) {
     auth.verificationToken = null;
@@ -83,28 +84,43 @@ exports.signUp = catchAsync(async (req, res, next) => {
 });
 
 exports.verify = catchAsync(async (req, res, next) => {
-  let token = req.params.token;
+  // Extract the token from the request parameters
+  const { token, email } = req.query;
+
+  // Find the user by email and include the Auth model
   const user = await User.findOne({
-    where: {
-      email: req.body?.email,
-    },
+    where: { email },
     include: Auth,
   });
 
+  // If user is not found, return an error
+  if (!user) {
+    return next(new appError("User not found", 404));
+  }
+
   const auth = user.Auth;
 
-  token = crypto
-    .createHash('sha256')
-    .update(token)
-    .digest('hex');
+  // If auth is not found, return an error
+  if (!auth) {
+    return next(new appError("Authentication details not found", 404));
+  }
 
-  if (token !== auth.verificationToken) {
+  // Hash the token
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  // Check if the token matches the stored verification token
+  if (hashedToken !== auth.verificationToken) {
     return next(new appError("Token does not match the correct token", 401));
   }
 
+  // Update the verification status
   auth.isVerified = true;
   auth.verificationToken = null;
-  auth.save();
+
+  // Save the auth model
+  await auth.save();
+
+  // Create and send the token
   createAndSendToken(user, auth, 200, res);
 });
 
@@ -130,7 +146,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify/${verificationToken}`;
+    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
     await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
@@ -167,6 +183,9 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
+  if (!auth.isVerified){
+    return next(new appError("Verify the email",403))
+  }
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
 
   if (!isPasswordMatch) {
@@ -305,7 +324,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify/${passwordResetToken}`;
+    const verificationLink = `localhost:1020/api/v1/auths/verify/${passwordResetToken}`; // change to reset password link
     const text = `Click the following link to verify your email: ${verificationLink}`;
     await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
