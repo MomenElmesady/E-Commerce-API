@@ -6,6 +6,8 @@ const cookieParser = require('cookie-parser');
 const errorController = require("./constrollers/errorController.js")
 const swaggerUi = require("swagger-ui-express")
 const swaggerDocument = require("./swagger.json")
+const sequelize = require('./sequelize');
+
 
 // security 
 const rateLimit = require('express-rate-limit');
@@ -60,6 +62,11 @@ app.all("*", (req, res, next) => {
 })
 
 app.use(errorController)
+
+// sequelize.sync({alter: true})
+// .then(() => {
+//   console.log('Database & tables created!');
+// });
 
 app.listen(1020, () => {
   console.log("app Running on port 1020")

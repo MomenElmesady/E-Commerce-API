@@ -6,7 +6,10 @@ const Category = sequelize.define("Category",{
     type: DataTypes.STRING,
     allowNull: false
   },
-  
+  photo: {
+    type: DataTypes.STRING,
+    defaultValue: "default.png"
+  }
 },{
   timestamps: true
 })

@@ -101,7 +101,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
       return next(appError("The cart is empty or invalid", 404));
     }
 
-    const order = await createOrder(req.user, cart, transaction);
+    const order = await createOrder(req.user, cart, transaction,req.body.addressInDetails);
     const orderItems = await createOrderItems(order, cartItems, transaction);
     const total = await calculateTotalCheckOut(orderItems);
 
@@ -399,12 +399,13 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
 exports.getAllOrders = handlerFactory.getAll(Order)
 
 // functions 
-async function createOrder(userId, cart, transaction) {
+async function createOrder(userId, cart, transaction,addressInDetails) {
   return Order.create(
     {
       user_id: userId,
       address_id: cart.User.address_id,
       total: 0,
+      addressInDetails
     },
     { transaction } // Pass the transaction parameter to the create method
   );

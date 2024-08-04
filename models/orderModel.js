@@ -19,7 +19,10 @@ const Order = sequelize.define("Order", {
   },
   address_id: {
     type: DataTypes.INTEGER
-  }
+  },
+  addressInDetails: {
+    type: DataTypes.STRING
+},
 }, {
   timestamps: true
 })
