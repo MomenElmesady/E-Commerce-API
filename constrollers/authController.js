@@ -15,12 +15,11 @@ const createToken = async (id, expiresIn) => {
 
 const createAndSendToken = async (user, auth, statusCode, res) => {
   const refreshToken = await createToken(auth.user_id, '30d');
-
   res.cookie("refreshToken", refreshToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
   auth.refreshToken = refreshToken;
   auth.save();
 
-  const accessToken = await createToken(auth.user_id, '5m');
+  const accessToken = await createToken(auth.user_id, '30d');
   let userResponse = {
     id: user.id,
     user_name: user.user_name,
@@ -70,7 +69,7 @@ exports.signUp = (async (req, res, next) => {
     // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
       status: "success",
-      message: text,
+      link: verificationLink,
     });
   } catch (err) {
     auth.verificationToken = null;
@@ -137,6 +136,9 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
+  if (auth.isVerified){
+    return next(new appError("User is already verified",403))
+  }
   const verificationToken = crypto.randomBytes(32).toString('hex');
   auth.verificationToken = crypto
     .createHash('sha256')
@@ -146,12 +148,12 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
+    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${req.body?.email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
-    await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
+    // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
       status: "success",
-      message: "Verification token sent to email",
+      link: verificationLink
     });
   } catch (err) {
     auth.verificationToken = null;
@@ -179,7 +181,7 @@ exports.login = catchAsync(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new appError("No user found with this email", 404));
+    return next(new appError("Incorrect Email or Password", 404));
   }
 
   const auth = user.Auth;
@@ -189,7 +191,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
 
   if (!isPasswordMatch) {
-    return next(new appError("Incorrect password", 401));
+    return next(new appError("Incorrect Email or Password", 401));
   }
 
   createAndSendToken(user, auth, 200, res);
@@ -204,17 +206,12 @@ exports.logout = catchAsync(async (req, res, next) => {
 
   const user = await User.findOne({
     where: {
-      email: req.body.email,
+      id: req.user,
     },
     include: Auth,
   });
 
-  if (!user) {
-    return next(new appError("Cannot find user with this email", 404));
-  }
-
   let auth = user.Auth;
-
   if (refreshToken !== auth.refreshToken) {
     return next(new appError("Incorrect refreshToken", 403));
   }
@@ -264,16 +261,15 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   token = token.split(" ")[1];
-  if (!req.cookies.refreshToken) {
-    return next(new appError("No refreshToken in cookie!", 401));
-  }
-  // more security 
+  // if (!req.cookies.refreshToken) {
+  //   return next(new appError("No refreshToken in cookie!", 401));
+  // }
+  // more security-> may compare it with the stored in db
   if (!req.cookies.refreshToken) {
     return next(new appError("No refreshToken found in cookie", 400))
   }
 
   try {
-    console.log(token)
     var decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
   } catch (err) {
     return next(new appError("Unable to verify token", 401));
@@ -324,7 +320,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify/${passwordResetToken}`; // change to reset password link
+    const verificationLink = `localhost:1020/api/v1/auths//resetPassword/${passwordResetToken}`; // change to reset password link
     const text = `Click the following link to verify your email: ${verificationLink}`;
     await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({

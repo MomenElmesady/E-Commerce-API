@@ -44,9 +44,6 @@ exports.getOne = Model =>
 
 exports.createOne = Model =>
   catchAsync(async (req, res, next) => {
-    if (!req.body.country){
-      return next(new appError("Country Wanted",400))
-    }
     const data = await Model.create(req.body);
 
     res.status(201).json({
