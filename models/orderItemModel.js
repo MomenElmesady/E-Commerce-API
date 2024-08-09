@@ -26,7 +26,5 @@ const OrderItem = sequelize.define("OrderItem", {
   timestamps: true
 })
 
-Product.hasMany(OrderItem, { foreignKey: "product_id" })
-OrderItem.belongsTo(Product, { foreignKey: "product_id" })
 module.exports = OrderItem;
 

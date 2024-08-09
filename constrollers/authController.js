@@ -1,5 +1,3 @@
-const User = require("../models/userModel");
-const Auth = require("../models/authModel");
 const catchAsync = require("../utils/catchAsync");
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
@@ -8,6 +6,16 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { promisify } = require("util");
 const sequelize = require("../sequelize")
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("../models/asc2.js")
 
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });

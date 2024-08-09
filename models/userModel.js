@@ -1,9 +1,12 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
-const bcrypt = require("bcrypt")
 const Cart = require("./cartModel")
 const Auth = require("../models/authModel");
 const catchAsync = require('../utils/catchAsync');
+const Product = require("./productModel")
+const UserFavorites = require("./userFavorites")
+
+
 const User = sequelize.define("User", {
   user_name: {
     type: DataTypes.STRING,
@@ -42,10 +45,8 @@ const User = sequelize.define("User", {
     })
   }
 })
-User.hasOne(Cart, { foreignKey: "user_id" })
-Cart.belongsTo(User, { foreignKey: "user_id" })
 
-User.hasOne(Auth, { foreignKey: "user_id" })
-Auth.belongsTo(User, { foreignKey: "user_id" })
+
+
 
 module.exports = User;

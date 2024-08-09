@@ -1,12 +1,19 @@
-const Review = require("../models/productReviewModel");
-const Product = require("../models/productModel");
-const Order = require("../models/orderModel");
-const OrderItem = require("../models/orderItemModel");
-const OrderState = require("../models/orderStateModel");
 const catchAsync = require("../utils/catchAsync");
 const appError = require("../utils/appError");
 const sequelize = require("../sequelize");
 const handlerFactory = require("./handlerFactory");
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites,
+  Review
+} = require("../models/asc2.js")
 
 exports.updateReview = catchAsync(async (req, res, next) => {
   const updateDetails = await Review.update(

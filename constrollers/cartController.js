@@ -1,12 +1,19 @@
-const CartItem = require("../models/cartItemModel");
-const Cart = require("../models/cartModel");
-const Product = require("../models/productModel");
 const catchAsync = require("../utils/catchAsync");
 const sequelize = require("sequelize");
 const handlerFactory = require("./handlerFactory");
 const appError = require("../utils/appError");
-const User = require("../models/userModel");
 
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("../models/asc2.js")
+  
 exports.addToCart = catchAsync(async (req, res, next) => {
   const cart = await Cart.findOne({
     where: {

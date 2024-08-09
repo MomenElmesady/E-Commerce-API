@@ -10,8 +10,6 @@ const Cart = sequelize.define("Cart", {
 })
 
 
-Cart.hasMany(CartItem, { foreignKey: "cart_id" })
-CartItem.belongsTo(Cart, { foreignKey: "cart_id" })
 
 
 module.exports = Cart;

@@ -1,13 +1,19 @@
-const Category = require("../models/categoryModel");
-const Product = require("../models/productModel");
-const OrderItem = require("../models/orderItemModel");
-const Order = require("../models/orderModel");
-const User = require("../models/userModel");
 const { Op } = require('sequelize');
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory");
 const sequelize = require("../sequelize");
 const appError = require("../utils/appError");
+
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("../models/asc2.js")
 
 // for AI analyses
 exports.getProductsForUser = catchAsync(async (req, res, next) => {

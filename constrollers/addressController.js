@@ -1,4 +1,4 @@
-const Address = require("../models/addressModel")
+const {Address} = require("../models/asc2")
 const handlerFactory = require("./handlerFactory")
 
 exports.updateAddress = handlerFactory.updateOne(Address)

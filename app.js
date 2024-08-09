@@ -8,6 +8,22 @@ const swaggerUi = require("swagger-ui-express")
 const swaggerDocument = require("./swagger.json")
 const sequelize = require('./sequelize');
 
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("./models/asc2.js")
+
+  // sequelize.sync({ force: false }).then(() => {
+  //   console.log("Database & tables created!");
+  // }).catch(error => {
+  //   console.error('Unable to create tables, shutting down...', error);
+  // });
 
 // security 
 const rateLimit = require('express-rate-limit');
@@ -24,6 +40,7 @@ const productRouter = require("./routes/productRouter")
 const cartRouter = require("./routes/cartRouter")
 const orderRouter = require("./routes/orderRouter")
 const reviewRouter = require("./routes/reviewRouter");
+const favoriteRouter = require("./routes/userFavoritesRouter.js");
 const appError = require("./utils/appError.js");
 
 const app = express();
@@ -55,6 +72,7 @@ app.use("/api/v1/products", productRouter)
 app.use("/api/v1/carts", cartRouter)
 app.use("/api/v1/orders", orderRouter)
 app.use("/api/v1/reviews", reviewRouter)
+app.use("/api/v1/favorites", favoriteRouter)
 
 
 app.all("*", (req, res, next) => {

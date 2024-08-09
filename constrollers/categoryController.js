@@ -1,5 +1,14 @@
-const Category = require("../models/categoryModel")
 const handlerFactory = require("./handlerFactory")
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("../models/asc2.js")
 
 // CRUD Operations 
 exports.updateCategory = handlerFactory.updateOne(Category)

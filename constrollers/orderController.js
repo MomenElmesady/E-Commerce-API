@@ -1,14 +1,16 @@
-const Order = require("../models/orderModel")
-const OrderState = require("../models/orderStateModel")
-const Cart = require("../models/cartModel")
-const OrderItem = require("../models/orderItemModel")
-const CartItem = require("../models/cartItemModel")
-const User = require("../models/userModel")
-const Product = require("../models/productModel")
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
-const Payment = require("../models/paymentModel")
 const handlerFactory = require("./handlerFactory")
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites } = require("../models/asc2.js")
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
 
