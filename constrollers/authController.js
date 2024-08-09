@@ -263,7 +263,6 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token = req.headers?.authorization;
-
   if (!token || !token.startsWith("Bearer")) {
     return next(new appError("No token in Bearer auth!", 401));
   }

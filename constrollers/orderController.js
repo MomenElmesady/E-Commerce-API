@@ -10,7 +10,8 @@ const { Auth,
   OrderState,
   Product,
   User,
-  UserFavorites } = require("../models/asc2.js")
+  UserFavorites,
+  Payment } = require("../models/asc2.js")
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
 
@@ -76,7 +77,7 @@ exports.createCheckOutSession = catchAsync(async(req,res,next)=>{
   res.status(200).json({
     session
   })
-})  
+})
 
 exports.checkOut = catchAsync(async (req, res, next) => {
   const transaction = await sequelize.transaction();
@@ -100,10 +101,10 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     });
 
     if (!cart || cartItems.length === 0) {
-      return next(appError("The cart is empty or invalid", 404));
+      return next(new appError("The cart is empty or invalid", 404));
     }
 
-    const order = await createOrder(req.user, cart, transaction,req.body.addressInDetails);
+    const order = await createOrder(req.user, cart, transaction,req.body.addressInDetails,req.body.addressId);
     const orderItems = await createOrderItems(order, cartItems, transaction);
     const total = await calculateTotalCheckOut(orderItems);
 
@@ -401,11 +402,11 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
 exports.getAllOrders = handlerFactory.getAll(Order)
 
 // functions 
-async function createOrder(userId, cart, transaction,addressInDetails) {
+async function createOrder(userId, cart, transaction,addressInDetails,addressId) {
   return Order.create(
     {
       user_id: userId,
-      address_id: cart.User.address_id,
+      address_id: addressId,
       total: 0,
       addressInDetails
     },

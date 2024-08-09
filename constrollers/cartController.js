@@ -73,7 +73,7 @@ exports.deleteFromCart = catchAsync(async (req, res, next) => {
 });
 
 exports.updateCartItem = catchAsync(async (req, res, next) => {
-  const cartItem = await CartItem.findByPk(req.params.orderItemId);
+  const cartItem = await CartItem.findByPk(req.params.cartItemId);
   const cart = await Cart.findOne({
     where: {
       user_id: req.user,
@@ -84,12 +84,13 @@ exports.updateCartItem = catchAsync(async (req, res, next) => {
     return next(new appError("Cart item does not belong to this user", 403));
   }
 
-  cartItem.quantity = req.body.quantity;
+  cartItem.quantity = req.body.quantity || cartItem.quantity;
   cartItem.save();
 
   res.status(200).json({
     status: "success",
     message: "Item updated successfully",
+    data : cartItem
   });
 });
 
