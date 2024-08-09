@@ -406,7 +406,7 @@ async function createOrder(userId, cart, transaction,addressInDetails,addressId)
   return Order.create(
     {
       user_id: userId,
-      address_id: addressId,
+      address_id: addressId || cart.User.address_id,
       total: 0,
       addressInDetails
     },
