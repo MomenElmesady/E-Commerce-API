@@ -46,6 +46,7 @@ Auth.belongsTo(User, { foreignKey: "user_id" })
 User.belongsToMany(Product, { through: UserFavorites, foreignKey: 'user_id' });
 Product.belongsToMany(User, { through: UserFavorites, foreignKey: 'product_id' });
 
+
 module.exports = {
     Auth,
     Cart,

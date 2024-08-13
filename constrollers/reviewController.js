@@ -2,16 +2,11 @@ const catchAsync = require("../utils/catchAsync");
 const appError = require("../utils/appError");
 const sequelize = require("../sequelize");
 const handlerFactory = require("./handlerFactory");
-const { Auth,
-  Cart,
-  CartItem,
-  Category,
+const {
   Order,
   OrderItem,
   OrderState,
   Product,
-  User,
-  UserFavorites,
   Review
 } = require("../models/asc2.js")
 
@@ -58,7 +53,6 @@ exports.checkReviewExisting = catchAsync(async (req, res, next) => {
       product_id: req.params.productId
     }
   });
-  console.log(checkUserReview)
   if (checkUserReview) {
     return next(new appError("This user has already rated this product",400));
   }
@@ -69,7 +63,7 @@ exports.checkReviewExisting = catchAsync(async (req, res, next) => {
 exports.checkBuying = catchAsync(async (req, res, next) => {
   const orderItem = await OrderItem.findOne({
     where: {
-      id: req.params.productId
+      product_id: req.params.productId
     },
     include: {
       model: Order,
@@ -82,7 +76,8 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
       }
     }
   });
-
+  
+  console.log(orderItem);
   if (orderItem) {
     next();
   } else {

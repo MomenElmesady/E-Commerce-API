@@ -3,19 +3,10 @@ const appError = require("../utils/appError");
 const sendEmail = require("../utils/sendEmail");
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory");
-const crypto = require("crypto");
-const sequelize = require("../sequelize")
 
 const { Auth,
-  Cart,
-  CartItem,
-  Category,
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
   User,
-  UserFavorites } = require("../models/asc2.js")
+} = require("../models/asc2.js")
 
 
 exports.getUsersInAddress = catchAsync(async (req, res, next) => {

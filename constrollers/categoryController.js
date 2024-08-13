@@ -1,14 +1,8 @@
 const handlerFactory = require("./handlerFactory")
 const { Auth,
-  Cart,
-  CartItem,
   Category,
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
-  User,
-  UserFavorites } = require("../models/asc2.js")
+} = require("../models/asc2.js")
+const catchAsync = require("../utils/catchAsync.js");
 
 // CRUD Operations 
 exports.updateCategory = handlerFactory.updateOne(Category)

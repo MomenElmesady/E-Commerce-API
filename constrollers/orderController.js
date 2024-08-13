@@ -1,16 +1,14 @@
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
 const handlerFactory = require("./handlerFactory")
-const { Auth,
+const {
   Cart,
   CartItem,
-  Category,
   Order,
   OrderItem,
   OrderState,
   Product,
   User,
-  UserFavorites,
   Payment } = require("../models/asc2.js")
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
@@ -51,10 +49,10 @@ exports.getOrder = catchAsync(async (req, res, next) => {
   })
 })
 
-exports.createCheckOutSession = catchAsync(async(req,res,next)=>{
+exports.createCheckOutSession = catchAsync(async (req, res, next) => {
   const lineItems = []
   const products = await Product.findAll()
-  for (i of products){
+  for (i of products) {
     lineItems.push({
       price_data: {
         currency: "usd",
@@ -104,10 +102,10 @@ exports.checkOut = catchAsync(async (req, res, next) => {
       return next(new appError("The cart is empty or invalid", 404));
     }
 
-    const order = await createOrder(req.user, cart, transaction,req.body.addressInDetails,req.body.addressId);
+    const order = await createOrder(req.user, cart, transaction, req.body.addressInDetails, req.body.addressId);
     const orderItems = await createOrderItems(order, cartItems, transaction);
     const total = await calculateTotalCheckOut(orderItems);
-
+    console.log(orderItems)
     // Update order total and fetch the updated order details
     const orderState = await createOrderState(order.id, transaction);
 
@@ -126,7 +124,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   } catch (err) {
     // If any error occurs, rollback the transaction
     await transaction.rollback();
-    next(new appError(err.message,400));
+    next(new appError(err.message, 400));
   }
 });
 
@@ -402,7 +400,7 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
 exports.getAllOrders = handlerFactory.getAll(Order)
 
 // functions 
-async function createOrder(userId, cart, transaction,addressInDetails,addressId) {
+async function createOrder(userId, cart, transaction, addressInDetails, addressId) {
   return Order.create(
     {
       user_id: userId,

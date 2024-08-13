@@ -7,15 +7,10 @@ const bcrypt = require("bcrypt");
 const { promisify } = require("util");
 const sequelize = require("../sequelize")
 const { Auth,
-  Cart,
-  CartItem,
-  Category,
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
   User,
-  UserFavorites } = require("../models/asc2.js")
+  Cart
+} = require("../models/asc2.js")
+
 
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
@@ -46,13 +41,17 @@ const createAndSendToken = async (user, auth, statusCode, res) => {
   });
 };
 
-exports.signUp = (async (req, res, next) => {
+exports.signUp = catchAsync(async (req, res, next) => {
   var { user_name, email, password, address_id, phone_number } = req.body;
   let user_role = req.body.user_role || "user";
 
   const transaction = await sequelize.transaction();
   try {
     var user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
+    await Cart.create({
+      user_id: user.id
+    }, { transaction })
+
     var verificationToken = crypto.randomBytes(32).toString('hex');
     var auth = await Auth.create({
       user_id: user.id,
@@ -70,7 +69,7 @@ exports.signUp = (async (req, res, next) => {
     await transaction.rollback();
     return next(new appError(err.message, 400));
   }
-  
+
   try {
     const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
@@ -144,8 +143,8 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
-  if (auth.isVerified){
-    return next(new appError("User is already verified",403))
+  if (auth.isVerified) {
+    return next(new appError("User is already verified", 403))
   }
   const verificationToken = crypto.randomBytes(32).toString('hex');
   auth.verificationToken = crypto
@@ -193,8 +192,8 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
-  if (!auth.isVerified){
-    return next(new appError("Verify the email",403))
+  if (!auth.isVerified) {
+    return next(new appError("Verify the email", 403))
   }
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
 

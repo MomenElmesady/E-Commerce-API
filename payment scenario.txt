@@ -1,0 +1,145 @@
+npm install stripe
+ -----------------------------
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // or hardcode the key, but environment variables are better for security
+------------------------------
+exports.checkOut = catchAsync(async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const userId = req.user;
+    const { method, addressInDetails, addressId } = req.body;
+
+    if (!method) {
+      throw new appError("Payment method is required", 400);
+    }
+
+    const cart = await Cart.findOne({
+      where: { user_id: userId },
+      include: User,
+      transaction,
+    });
+
+    if (!cart) {
+      return next(new appError("The cart is empty or invalid", 404));
+    }
+
+    const cartItems = await CartItem.findAll({
+      where: { cart_id: cart.id },
+      include: [Product],
+      transaction,
+    });
+
+    const order = await createOrder(userId, cart, transaction, addressInDetails, addressId);
+    const orderItems = await createOrderItems(order, cartItems, transaction);
+    const total = await calculateTotalCheckOut(orderItems);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: cartItems.map(item => {
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: item.Product.name,
+            },
+            unit_amount: item.Product.price * 100, // Amount is in cents
+          },
+          quantity: item.quantity,
+        };
+      }),
+      success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`, // Redirect URL after successful payment
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+      metadata: {
+        orderId: order.id,
+        userId: userId,
+      },
+    });
+
+    // Save the session ID in your database if needed
+
+    // Commit the transaction (don't do it yet until you receive the webhook)
+    // await transaction.commit();
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        order,
+        sessionId: session.id,
+        stripePublicKey: process.env.STRIPE_PUBLIC_KEY, // Send this to the frontend to initiate the session
+      },
+    });
+  } catch (err) {
+    await transaction.rollback();
+    next(new appError(err.message, 400));
+  }
+});
+------------------------------------------
+// Assuming you're using a Stripe client-side library like Stripe.js
+
+const stripe = Stripe('YOUR_STRIPE_PUBLIC_KEY'); // Use the public key from the backend
+
+async function redirectToCheckout(sessionId) {
+  const { error } = await stripe.redirectToCheckout({ sessionId });
+
+  if (error) {
+    console.error("Error redirecting to Stripe:", error);
+  }
+}
+------------------------------------------------
+const endpointSecret = 'whsec_...'; // Your webhook secret
+
+exports.handleStripeWebhook = async (req, res, next) => {
+  const sig = req.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed':
+      const session = event.data.object;
+
+      // Fulfill the purchase...
+      handleOrderCompletion(session);
+      break;
+    // ... handle other event types
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Return a response to acknowledge receipt of the event
+  res.json({ received: true });
+};
+
+async function handleOrderCompletion(session) {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const order = await Order.findByPk(session.metadata.orderId, { transaction });
+
+    if (!order) {
+      throw new Error("Order not found");
+    }
+
+    await createOrderState(order.id, transaction);
+    await updateOrder(order.id, session.amount_total / 100, transaction);
+    await deleteCartItems(order, transaction);
+    await createPayment('stripe', order.id, session.metadata.userId, transaction);
+
+    await transaction.commit();
+  } catch (error) {
+    await transaction.rollback();
+    console.error("Error handling Stripe session completion:", error);
+  }
+}
+--------------------------------------------------
+const bodyParser = require('body-parser');
+
+// Stripe requires the raw body to validate the webhook signature
+app.post('/webhook', bodyParser.raw({ type: 'application/json' }), handleStripeWebhook);
