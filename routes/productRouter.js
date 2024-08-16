@@ -28,12 +28,14 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter })
 
 // redirect to review Router / merge routes /
+router.get("/homePage",authController.protect, productController.getHomePageProducts)
+
 router.use("/:productId/review", reviewRouter)
 
 // test
 // router.post("/upload",upload.single("photo"))
 router.get("/search", productController.searchInProducts)
-router.get("/category/:categoryId", productController.getProductsOfCategory)
+router.get("/category/:categoryId",authController.protect, productController.getProductsOfCategory)
 router.get("/getProductsForUser/:userId", productController.getProductsForUser)
 
 router.route("/").get(productController.getAllProducts)
@@ -43,6 +45,5 @@ router.route("/").get(productController.getAllProducts)
 router.route("/:id").get(productController.getProduct)
   .patch(authController.protect, authController.allowedTo("manager"), upload.single("photo"), productController.addDefaultPhoto, productController.updateProduct)
   .delete(authController.protect, authController.allowedTo("manager"), productController.deleteProduct)
-
 
 module.exports = router

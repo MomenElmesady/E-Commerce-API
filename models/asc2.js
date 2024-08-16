@@ -11,6 +11,7 @@ const UserFavorites = require("./userFavorites")
 const Address = require("./addressModel")
 const Review = require("./productReviewModel")
 const Payment = require("./paymentModel")
+const ProductReview = require("./productReviewModel")
 
 
 
@@ -43,8 +44,26 @@ Cart.belongsTo(User, { foreignKey: "user_id" })
 User.hasOne(Auth, { foreignKey: "user_id" })
 Auth.belongsTo(User, { foreignKey: "user_id" })
 
-User.belongsToMany(Product, { through: UserFavorites, foreignKey: 'user_id' });
-Product.belongsToMany(User, { through: UserFavorites, foreignKey: 'product_id' });
+User.belongsToMany(Product, { through: 'UserFavorites', foreignKey: 'user_id' });
+Product.belongsToMany(User, { through: 'UserFavorites', foreignKey: 'product_id' });
+
+User.hasMany(Payment, { foreignKey: "user_id" })
+Payment.belongsTo(User, { foreignKey: "user_id" })
+
+Order.hasOne(Payment, { foreignKey: "order_id" })
+Payment.belongsTo(Order, { foreignKey: "order_id" })
+
+Address.hasMany(User, { foreignKey: "address_id" })
+User.belongsTo(Address, { foreignKey: "address_id" })
+
+Order.belongsTo(Address, { foreignKey: "address_id" })
+Address.hasMany(Order, { foreignKey: "address_id" })
+
+ProductReview.belongsTo(Product, { foreignKey: 'product_id' });
+Product.hasMany(ProductReview, { foreignKey: 'product_id' });
+
+ProductReview.belongsTo(User, { foreignKey: 'user_id' });
+User.hasMany(ProductReview, { foreignKey: 'user_id' });
 
 
 module.exports = {
@@ -57,8 +76,9 @@ module.exports = {
     OrderState,
     Product,
     User,
-    UserFavorites,
     Address,
     Review,
-    Payment
+    Payment,
+    ProductReview,
+    UserFavorites
 }

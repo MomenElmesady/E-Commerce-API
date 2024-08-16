@@ -1,8 +1,5 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
-const Category = require("./categoryModel")
-const User = require("./userModel")
-const UserFavorites = require("./userFavorites")
 
 
 const Product = sequelize.define("Product", {

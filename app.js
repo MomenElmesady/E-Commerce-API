@@ -17,13 +17,15 @@ const { Auth,
   OrderState,
   Product,
   User,
-  UserFavorites } = require("./models/asc2.js")
+  UserFavorites,
+  Address,
+  ProductReview, Payment } = require("./models/asc2.js")
 
-  // sequelize.sync({ force: false }).then(() => {
-  //   console.log("Database & tables created!");
-  // }).catch(error => {
-  //   console.error('Unable to create tables, shutting down...', error);
-  // });
+// sequelize.sync({ force: false }).then(() => {
+//   console.log("Database & tables created!");
+// }).catch(error => {
+//   console.error('Unable to create tables, shutting down...', error);
+// });
 
 // security 
 const rateLimit = require('express-rate-limit');
@@ -64,7 +66,7 @@ app.use('/api/v1/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cookieParser());
 
-app.use("/api/v1/addresses",addressRouter)
+app.use("/api/v1/addresses", addressRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/auths", authRouter)
 app.use("/api/v1/categories", categoryRouter)
