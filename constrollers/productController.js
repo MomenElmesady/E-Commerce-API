@@ -10,7 +10,8 @@ const {
   Order,
   OrderItem,
   Product,
-  User} = require("../models/asc2.js")
+  User,
+  Category} = require("../models/asc2.js")
 
 // for AI analyses
 exports.getProductsForUser = catchAsync(async (req, res, next) => {
@@ -125,8 +126,8 @@ exports.searchInProducts = catchAsync(async (req, res, next) => {
       name: {
         [Op.like]: `%${q}%`
       }
-    }
-  });
+    }  
+});
 
   res.status(200).json({
     status: "success",
@@ -186,9 +187,28 @@ exports.getHomePageProducts = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getProduct = catchAsync(async (req, res, next) => {
+  const userId = req.user; 
+
+  const query = 
+  `select p.*, IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
+from products p LEFT JOIN userfavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
+where p.id = :productId`;
+;
+
+  const results = await sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements: { userId: +userId, productId: +req.params.id }, 
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: results[0]
+  });
+
+});
 
 exports.deleteProduct = handlerFactory.deleteOne(Product);
 exports.getAllProducts = handlerFactory.getAll(Product);
-exports.getProduct = handlerFactory.getOne(Product);
 exports.createProduct = handlerFactory.createOne(Product);
 exports.updateProduct = handlerFactory.updateOne(Product);

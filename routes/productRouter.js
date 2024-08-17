@@ -42,7 +42,7 @@ router.route("/").get(productController.getAllProducts)
   .post(authController.protect, authController.allowedTo("manager"),
     upload.single("photo"), productController.addDefaultPhoto, productController.createProduct)
 
-router.route("/:id").get(productController.getProduct)
+router.route("/:id").get(authController.protect,productController.getProduct)
   .patch(authController.protect, authController.allowedTo("manager"), upload.single("photo"), productController.addDefaultPhoto, productController.updateProduct)
   .delete(authController.protect, authController.allowedTo("manager"), productController.deleteProduct)
 
