@@ -105,11 +105,12 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     const order = await createOrder(req.user, cart, transaction, req.body.addressInDetails, req.body.addressId);
     const orderItems = await createOrderItems(order, cartItems, transaction);
     const total = await calculateTotalCheckOut(orderItems);
-    console.log(orderItems)
+    order.total = total;
+    order.save({ transaction });
+    console.log(order)
     // Update order total and fetch the updated order details
     const orderState = await createOrderState(order.id, transaction);
 
-    await updateOrder(order.id, total, transaction);
     await Order.findByPk(order.id, { transaction });
     await deleteCartItems(cartItems, transaction);
     await createPayment(method, order.id, req.user, transaction);

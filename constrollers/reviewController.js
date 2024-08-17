@@ -11,6 +11,9 @@ const {
 } = require("../models/asc2.js")
 
 exports.updateReview = catchAsync(async (req, res, next) => {
+  if (req.body.rate && (req.body.rate < 0 || req.body.rate > 5)) {
+    return next(new appError("Rate must be in range 0 and 5", 404));
+  }
   const updateDetails = await Review.update(
     req.body,
     {
@@ -54,13 +57,16 @@ exports.checkReviewExisting = catchAsync(async (req, res, next) => {
     }
   });
   if (checkUserReview) {
-    return next(new appError("This user has already rated this product",400));
+    return next(new appError("This user has already rated this product", 400));
   }
 
   next();
 });
 
 exports.checkBuying = catchAsync(async (req, res, next) => {
+  if (req.body.rate && (req.body.rate < 0 || req.body.rate > 5)) {
+    return next(new appError("Rate must be in range 0 and 5", 400));
+  }
   const orderItem = await OrderItem.findOne({
     where: {
       product_id: req.params.productId
@@ -76,8 +82,6 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
       }
     }
   });
-  
-  console.log(orderItem);
   if (orderItem) {
     next();
   } else {
