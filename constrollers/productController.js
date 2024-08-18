@@ -11,7 +11,9 @@ const {
   OrderItem,
   Product,
   User,
-  Category} = require("../models/asc2.js")
+  Category,
+  CartItem,
+  Cart} = require("../models/asc2.js")
 
 // for AI analyses
 exports.getProductsForUser = catchAsync(async (req, res, next) => {
@@ -207,6 +209,29 @@ where p.id = :productId`;
   });
 
 });
+
+exports.checkProductInCart = catchAsync(async (req, res, next) => {
+  const userId = req.user; 
+  const productId = req.params.productId;
+  const cart = await Cart.findOne({where: {user_id: userId}});
+  if (!cart){
+    return res.status(200).json({
+      status: "fail",
+      message: 'cant find cart for this user'
+    });
+  }
+  const cartItem = await CartItem.findOne({where: {cart_id: cart.id, product_id: productId}});
+  let data = false;
+  if (cartItem){
+    data = true;
+  }
+  return res.status(200).json({
+    status: "success",
+    data
+  });
+
+});
+
 
 exports.deleteProduct = handlerFactory.deleteOne(Product);
 exports.getAllProducts = handlerFactory.getAll(Product);

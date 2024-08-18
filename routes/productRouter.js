@@ -46,4 +46,5 @@ router.route("/:id").get(authController.protect,productController.getProduct)
   .patch(authController.protect, authController.allowedTo("manager"), upload.single("photo"), productController.addDefaultPhoto, productController.updateProduct)
   .delete(authController.protect, authController.allowedTo("manager"), productController.deleteProduct)
 
+router.get("/checkProductInCart/:productId",authController.protect, productController.checkProductInCart)
 module.exports = router
