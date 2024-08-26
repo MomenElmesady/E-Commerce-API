@@ -9,7 +9,8 @@ const {
   OrderState,
   Product,
   User,
-  Payment } = require("../models/asc2.js")
+  Payment, 
+  Address} = require("../models/asc2.js")
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
 
@@ -396,6 +397,27 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
     next(error);
   }
 });
+
+exports.getOrdersAddressForUser = catchAsync(async (req, res, next) => {
+  const userId = req.user;
+  const user = await User.findByPk(userId);
+  if (!user) {
+    return next(new appError("There is no user with this id", 404));
+  }
+  const addresses = await Order.findAll({
+    where: {
+      user_id: userId
+    },
+    attributes: ['addressInDetails'],
+    include: {
+      model: Address,
+    }
+  })
+  res.status(200).json({
+    status: "success",
+    data: addresses
+  })
+})
 
 
 exports.getAllOrders = handlerFactory.getAll(Order)

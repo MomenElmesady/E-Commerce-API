@@ -6,6 +6,8 @@ const router = express.Router()
 router.post("/create-checkout-session",orderController.createCheckOutSession)
 router.get("/checkOutSession",orderController.createCheckOutSession)
 
+router.get("/getOrdersAddressForUser",authController.protect ,orderController.getOrdersAddressForUser)
+
 router.route("/").get(orderController.getAllOrders)
 router.route("/:id").get(orderController.getOrder)
 .patch(orderController.updateOrder)

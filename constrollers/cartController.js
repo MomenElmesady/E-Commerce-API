@@ -195,5 +195,21 @@ exports.showPrice = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getCartItem = catchAsync(async (req, res, next) => {
+  const cartItem = await CartItem.findByPk(req.params.id, {
+    include: [{ model: Product }],
+  });
+
+  if (!cartItem) {
+    return next(new appError("Cart item not found", 404));
+  }
+
+  res.status(200).json({
+    status: "success",
+    data: cartItem,
+  });
+});
+
+
 exports.getCart = handlerFactory.getOne(Cart);
 exports.getAllCarts = handlerFactory.getAll(Cart);
