@@ -88,7 +88,14 @@ app.use(errorController)
 // .then(() => {
 //   console.log('Database & tables created!');
 // });
-
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+  
 app.listen(1020, () => {
   console.log("app Running on port 1020")
 })
