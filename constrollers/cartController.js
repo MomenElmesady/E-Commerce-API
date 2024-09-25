@@ -10,7 +10,7 @@ const {
   CartItem,
   Product,
   User } = require("../models/asc2.js")
-  
+
 exports.addToCart = catchAsync(async (req, res, next) => {
   const cart = await Cart.findOne({
     where: {
@@ -87,7 +87,7 @@ exports.updateCartItem = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Item updated successfully",
-    data : cartItem
+    data: cartItem
   });
 });
 
@@ -101,6 +101,16 @@ exports.showCart = catchAsync(async (req, res, next) => {
   }
 
   const userId = req.user;
+  let cart = await Cart.findOne({
+    where: {
+      user_id: req.user,
+    },
+  });
+
+  if (!cart) {
+    return next(new appError("Cart not found for this user", 404));
+  }
+
 
   // SQL query to fetch cart, cart items, and product data
   const query = `
@@ -124,11 +134,14 @@ exports.showCart = catchAsync(async (req, res, next) => {
 
   // If no results are found, return an error
   if (!results.length) {
-    return next(new appError("Cart not found for this user", 404));
+    return res.status(200).json({
+      status: "success",
+      data: [],
+    });
   }
 
   // Process the results to structure the response
-  const cart = {
+  cart = {
     id: results[0].cart_id,
     user_id: results[0].user_id,
     createdAt: results[0].cart_createdAt,
