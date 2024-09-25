@@ -238,7 +238,6 @@ exports.getOrderState = catchAsync(async (req, res, next) => {
     data: orderState
   })
 })
-
 exports.getUserOrders = catchAsync(async (req, res, next) => {
   const orders = await Order.findAll({
     where: {
@@ -246,11 +245,13 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
     },
     include: [
       {
+        model : Address,
+      },
+      {
         model: OrderItem,
         include: [
           {
-            model: Product,
-            attributes: ['id', 'name', 'price'],
+            model: Product, 
           },
         ],
       },
@@ -258,13 +259,13 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
         model: OrderState,
       },
     ],
-  })
+  });
 
   res.status(200).json({
     status: "success",
     data: orders
-  })
-})
+  });
+});
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
   const orderId = req.params.orderId;

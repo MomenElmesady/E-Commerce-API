@@ -34,7 +34,7 @@ router.use("/:productId/review", reviewRouter)
 
 // test
 // router.post("/upload",upload.single("photo"))
-router.get("/search", productController.searchInProducts)
+router.get("/search",authController.protect, productController.searchInProducts)
 router.get("/category/:categoryId",authController.protect, productController.getProductsOfCategory)
 router.get("/getProductsForUser/:userId", productController.getProductsForUser)
 

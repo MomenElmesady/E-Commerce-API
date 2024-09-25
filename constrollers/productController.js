@@ -69,13 +69,29 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
   const sortedBy = req.query.sort || "createdAt";
   const typeSort = req.query.sortOrder === "DESC" ? "DESC" : "ASC";
   const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 10;
+  const limit = req.query.limit * 1 || 4;
   const offset = (page - 1) * limit;
 
   const categoryId = req.params.categoryId;
   const userId = req.user; // Assuming req.user contains the user's ID
 
-  // Raw SQL query
+  // Step 1: Get the total count of products matching the criteria
+  const totalQuery = `
+    SELECT COUNT(*) AS total
+    FROM products p
+    WHERE p.category_id = :categoryId
+    AND p.price BETWEEN :minPrice AND :maxPrice
+  `;
+
+  const totalResult = await sequelize.query(totalQuery, {
+    replacements: { categoryId, minPrice, maxPrice },
+    type: sequelize.QueryTypes.SELECT
+  });
+
+  const totalProducts = totalResult[0].total; // Get total count of products
+  const totalPages = Math.ceil(totalProducts / limit); // Calculate total number of pages
+
+  // Step 2: Fetch paginated products
   const query = `
     SELECT 
         p.*,
@@ -114,28 +130,72 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
     type: sequelize.QueryTypes.SELECT
   });
 
+  // Get the number of products on this page
+  const numberOfProductsOnPage = products.length;
+
+  // Step 3: Return total pages, total products, and products for the current page
   res.status(200).json({
     status: "success",
-    data: products
+    totalProducts,            // Total number of matching products
+    totalPages,               // Total number of pages
+    numberOfProductsOnPage,    // The number of products on this page
+    currentPage: page,        // Current page number
+    data: products            // The products for the current page
   });
 });
-
 
 exports.searchInProducts = catchAsync(async (req, res, next) => {
-  const { q = "0000" } = req.query;
-  const products = await Product.findAll({
-    where: {
-      name: {
-        [Op.like]: `%${q}%`
-      }
-    }  
-});
+  const { q = "0000", categoryId } = req.query;
+  const userId = req.user;
+
+  // Create the search conditions
+  const whereConditions = {
+    name: {
+      [Op.like]: `%${q}%`
+    }
+  };
+
+  // If categoryId is provided, add it to the where condition
+  if (categoryId) {
+    whereConditions.category_id = categoryId;
+  }
+
+  // Query to search products and check if they are favorite for the user
+  const query = `
+    SELECT
+      p.*,
+      IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
+    FROM
+      products p
+    LEFT JOIN userfavorites uf
+      ON uf.user_id = :userId AND uf.product_id = p.id
+    WHERE
+      p.name LIKE :q
+    ${categoryId ? "AND p.category_id = :categoryId" : ""}
+  `;
+
+  const replacements = {
+    userId: +userId,
+    q: `%${q}%`
+  };
+
+  if (categoryId) {
+    replacements.categoryId = +categoryId;
+  }
+
+  // Execute the query
+  const products = await sequelize.query(query, {
+    type: QueryTypes.SELECT,
+    replacements
+  });
 
   res.status(200).json({
     status: "success",
     data: products
   });
 });
+
+
 
 exports.getHomePageProducts = catchAsync(async (req, res, next) => {
   const userId = req.user; 
