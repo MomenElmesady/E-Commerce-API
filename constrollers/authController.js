@@ -73,7 +73,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
   }
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
+    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
     // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
@@ -157,7 +157,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${req.body?.email}`;
+    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${req.body?.email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
     // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
@@ -177,32 +177,35 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
+  
   if (!email || !password) {
     return next(new appError("Must provide email and password", 400));
   }
-
+  
+  
   const user = await User.findOne({
     where: {
       email,
     },
     include: Auth,
   });
-
+  
   if (!user) {
     return next(new appError("Incorrect Email or Password", 404));
   }
-
+  
+  
   const auth = user.Auth;
   if (!auth.isVerified) {
     return next(new appError("Verify the email", 403))
   }
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
-
+  
   if (!isPasswordMatch) {
     return next(new appError("Incorrect Email or Password", 401));
   }
-
+  
+  
   createAndSendToken(user, auth, 200, res);
 });
 
@@ -353,7 +356,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `localhost:1020/api/v1/auths//resetPassword/${passwordResetToken}`; // change to reset password link
+    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths//resetPassword/${passwordResetToken}`; // change to reset password link
     const text = `Click the following link to verify your email: ${verificationLink}`;
     await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
     res.status(200).json({
