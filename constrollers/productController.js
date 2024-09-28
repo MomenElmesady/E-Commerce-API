@@ -141,7 +141,6 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
   });
 });
 
-
 exports.searchInProducts = catchAsync(async (req, res, next) => {
   const { q = "0000", categoryId } = req.query;
   const userId = req.user || null;  // Handle case where user is not logged in
