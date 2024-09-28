@@ -46,6 +46,7 @@ const favoriteRouter = require("./routes/userFavoritesRouter.js");
 const appError = require("./utils/appError.js");
 
 const app = express();
+app.set('trust proxy', 1);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(cors())
@@ -87,7 +88,14 @@ app.use(errorController)
 // .then(() => {
 //   console.log('Database & tables created!');
 // });
-
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+  
 app.listen(1020, () => {
   console.log("app Running on port 1020")
 })

@@ -1,4 +1,6 @@
 const catchAsync = require("../utils/catchAsync");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client('473650472727-mhmsu3u8lcqd74v79gobgbb3sovj2u29.apps.googleusercontent.com');
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 const appError = require("../utils/appError");
@@ -302,6 +304,31 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = decoded.id;
   next();
 });
+exports.optionalAuth = catchAsync(async (req, res, next) => {
+  let token = req.headers?.authorization;
+
+  if (token && token.startsWith("Bearer")) {
+    token = token.split(" ")[1];
+
+    try {
+      var decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+      const user = await User.findOne({
+        where: { id: decoded.id },
+        include: Auth,
+      });
+
+      if (user && user.Auth) {
+        req.user = decoded.id; // Set the user in the request if authenticated
+      }
+    } catch (err) {
+      // Token is invalid or can't be verified, ignore and continue as unauthenticated
+    }
+  }
+
+  next(); // Always proceed, even if user is not authenticated
+});
+
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
@@ -394,3 +421,42 @@ exports.allowedTo = (...roles) => {
   };
 };
 
+
+
+exports.googleSignin = async(req,res,next) => {
+  console.log(client)
+  const { token } = req.body;
+
+  try {
+    // Verify the Google token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: '473650472727-mhmsu3u8lcqd74v79gobgbb3sovj2u29.apps.googleusercontent.com',
+    });
+
+    const googleUser = ticket.getPayload();
+    console.log(googleUser);
+
+    // Find or create user in your database
+    let user = await findOrCreateUser(googleUser);
+    createAndSendToken(user,null,200,res)
+
+  }
+  catch(err){
+    res.send("error in OAuth2")
+  }
+}
+
+async function findOrCreateUser(googleUser) {
+  const { email, name } = googleUser;
+
+  // Find user in your database
+  let user = await User.findOne({ where: { email } });
+
+  // If no user exists, create a new one
+  if (!user) {
+    user = await User.create({ email, name });
+  }
+
+  return user;
+}
