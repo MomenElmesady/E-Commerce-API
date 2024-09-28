@@ -1,15 +1,8 @@
 // sequelize.js
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(
-  process.env.DATABASE_NAME, // Database name
-  process.env.DATABASE_USER, // Username
-  process.env.DATABASE_PASSWORD, // Password
-  {
-    host: process.env.DATABASE_HOST, // Hostname
-    dialect: 'mysql', // Database dialect
-    port: process.env.DATABASE_PORT || 3306, // Port (default 3306)
-  }
-);
-
+const sequelize = new Sequelize('sql12733949', 'sql12733949', 'fw7dzRt19k', {
+  host: 'sql12.freesqldatabase.com',
+  dialect: 'mysql',
+});
 module.exports = sequelize;
