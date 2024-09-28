@@ -69,7 +69,7 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
   const sortedBy = req.query.sort || "createdAt";
   const typeSort = req.query.sortOrder === "DESC" ? "DESC" : "ASC";
   const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 4;
+  const limit = req.query.limit * 1 || 10;
   const offset = (page - 1) * limit;
 
   const categoryId = req.params.categoryId;
