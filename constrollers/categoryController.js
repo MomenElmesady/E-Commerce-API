@@ -1,5 +1,8 @@
-const Category = require("../models/categoryModel")
 const handlerFactory = require("./handlerFactory")
+const { Auth,
+  Category,
+} = require("../models/asc2.js")
+const catchAsync = require("../utils/catchAsync.js");
 
 // CRUD Operations 
 exports.updateCategory = handlerFactory.updateOne(Category)

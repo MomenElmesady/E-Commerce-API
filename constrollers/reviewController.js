@@ -1,18 +1,28 @@
-const Review = require("../models/productReviewModel");
-const Product = require("../models/productModel");
-const Order = require("../models/orderModel");
-const OrderItem = require("../models/orderItemModel");
-const OrderState = require("../models/orderStateModel");
 const catchAsync = require("../utils/catchAsync");
 const appError = require("../utils/appError");
 const sequelize = require("../sequelize");
 const handlerFactory = require("./handlerFactory");
+const {
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  Review
+} = require("../models/asc2.js")
 
 exports.updateReview = catchAsync(async (req, res, next) => {
+  // Validate rate range
+  if (req.body.rate && (req.body.rate < 0 || req.body.rate > 5)) {
+    return next(new appError("Rate must be in range 0 and 5", 400));
+  }
+
+  // Perform the update operation
   const updateDetails = await Review.update(
     req.body,
     {
-      where: { user_Id: req.user, id: req.params.id },
+      where: { user_id: req.user, id: req.params.id }, 
+      returning: true, 
+      plain: true,
     }
   );
 
@@ -20,11 +30,15 @@ exports.updateReview = catchAsync(async (req, res, next) => {
     return next(new appError("No review found with this ID that belongs to the user", 404));
   }
 
+  const updatedReview = await Review.findOne({ where: { id: req.params.id } });
+
   res.status(200).json({
     status: "success",
     message: 'Updated successfully',
+    data: updatedReview, 
   });
 });
+
 
 exports.deleteReview = catchAsync(async (req, res, next) => {
   const deletedCount = await Review.destroy({
@@ -51,18 +65,20 @@ exports.checkReviewExisting = catchAsync(async (req, res, next) => {
       product_id: req.params.productId
     }
   });
-  console.log(checkUserReview)
   if (checkUserReview) {
-    return next(new appError("This user has already rated this product",400));
+    return next(new appError("This user has already rated this product", 400));
   }
 
   next();
 });
 
 exports.checkBuying = catchAsync(async (req, res, next) => {
+  if (req.body.rate && (req.body.rate < 0 || req.body.rate > 5)) {
+    return next(new appError("Rate must be in range 0 and 5", 400));
+  }
   const orderItem = await OrderItem.findOne({
     where: {
-      id: req.params.productId
+      product_id: req.params.productId
     },
     include: {
       model: Order,
@@ -75,7 +91,6 @@ exports.checkBuying = catchAsync(async (req, res, next) => {
       }
     }
   });
-
   if (orderItem) {
     next();
   } else {
@@ -144,6 +159,39 @@ exports.getAverageRating = catchAsync(async (req, res, next) => {
     status: "success",
     data: averageRating
   });
+});
+
+exports.checkUserReviewForProduct = catchAsync(async (req, res, next) => {
+  const { productId, userId } = req.params;
+
+  // Validate productId and userId
+  if (!productId || !userId) {
+    return next(new appError("Product ID and User ID are required", 400));
+  }
+
+  const review = await Review.findOne({
+    where: {
+      product_id: productId,
+      user_id: userId
+    }
+  });
+
+  if (review) {
+    res.status(200).json({
+      status: "success",
+      data: {
+        hasReviewed: true,
+        review
+      }
+    });
+  } else {
+    res.status(200).json({
+      status: "success",
+      data: {
+        hasReviewed: false
+      }
+    });
+  }
 });
 
 exports.createReview = handlerFactory.createOne(Review);

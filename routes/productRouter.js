@@ -28,21 +28,23 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, fileFilter })
 
 // redirect to review Router / merge routes /
+router.get("/homePage",authController.optionalAuth, productController.getHomePageProducts)
+
 router.use("/:productId/review", reviewRouter)
 
 // test
 // router.post("/upload",upload.single("photo"))
-router.get("/search", productController.searchInProducts)
-router.get("/category/:categoryId", productController.getProductsOfCategory)
+router.get("/search",authController.optionalAuth ,productController.searchInProducts)
+router.get("/category/:categoryId",authController.optionalAuth, productController.getProductsOfCategory)
 router.get("/getProductsForUser/:userId", productController.getProductsForUser)
 
 router.route("/").get(productController.getAllProducts)
   .post(authController.protect, authController.allowedTo("manager"),
     upload.single("photo"), productController.addDefaultPhoto, productController.createProduct)
 
-router.route("/:id").get(productController.getProduct)
+router.route("/:id").get(authController.protect,productController.getProduct)
   .patch(authController.protect, authController.allowedTo("manager"), upload.single("photo"), productController.addDefaultPhoto, productController.updateProduct)
   .delete(authController.protect, authController.allowedTo("manager"), productController.deleteProduct)
 
-
+router.get("/checkProductInCart/:productId",authController.protect, productController.checkProductInCart)
 module.exports = router

@@ -10,5 +10,5 @@ router.get("/showPrice", authController.protect, cartController.showPrice)
 router.patch("/updateCartItem/:cartItemId",authController.protect,cartController.updateCartItem)
 router.route("/:id").get(authController.protect,authController.allowedTo("manager"),cartController.getCart)
 router.route("/").get(authController.protect,authController.allowedTo("manager"),cartController.getAllCarts)
-
+router.get("/getCartItem/:id",authController.protect,cartController.getCartItem)
 module.exports = router

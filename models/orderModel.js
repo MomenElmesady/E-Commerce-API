@@ -9,11 +9,11 @@ const Order = sequelize.define("Order", {
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  date: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-  },
+  // date: {
+  //   type: DataTypes.DATE,
+  //   allowNull: false,
+  //   // defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+  // },
   user_id: {
     type: DataTypes.INTEGER
   },
@@ -26,15 +26,3 @@ const Order = sequelize.define("Order", {
 }, {
   timestamps: true
 })
-
-User.hasMany(Order, { foreignKey: "user_id" })
-Order.belongsTo(User, { foreignKey: "user_id" })
-
-Order.hasMany(OrderItem,{foreignKey: "order_id"})
-OrderItem.belongsTo(Order,{foreignKey: "order_id"})
-
-
-Order.hasOne(OrderState, { foreignKey: "order_id" })
-OrderState.belongsTo(Order, { foreignKey: "order_id" })
-
-module.exports = Order;

@@ -1,13 +1,12 @@
 const bcrypt = require("bcrypt");
-const Address = require("../models/addressModel");
-const User = require("../models/userModel");
-const Auth = require("../models/authModel");
 const appError = require("../utils/appError");
 const sendEmail = require("../utils/sendEmail");
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory");
-const crypto = require("crypto");
-const sequelize = require("../sequelize")
+
+const { Auth,
+  User,
+} = require("../models/asc2.js")
 
 
 exports.getUsersInAddress = catchAsync(async (req, res, next) => {

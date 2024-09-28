@@ -1,14 +1,16 @@
-const Order = require("../models/orderModel")
-const OrderState = require("../models/orderStateModel")
-const Cart = require("../models/cartModel")
-const OrderItem = require("../models/orderItemModel")
-const CartItem = require("../models/cartItemModel")
-const User = require("../models/userModel")
-const Product = require("../models/productModel")
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
-const Payment = require("../models/paymentModel")
 const handlerFactory = require("./handlerFactory")
+const {
+  Cart,
+  CartItem,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  Payment, 
+  Address} = require("../models/asc2.js")
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
 
@@ -48,10 +50,10 @@ exports.getOrder = catchAsync(async (req, res, next) => {
   })
 })
 
-exports.createCheckOutSession = catchAsync(async(req,res,next)=>{
+exports.createCheckOutSession = catchAsync(async (req, res, next) => {
   const lineItems = []
   const products = await Product.findAll()
-  for (i of products){
+  for (i of products) {
     lineItems.push({
       price_data: {
         currency: "usd",
@@ -74,7 +76,7 @@ exports.createCheckOutSession = catchAsync(async(req,res,next)=>{
   res.status(200).json({
     session
   })
-})  
+})
 
 exports.checkOut = catchAsync(async (req, res, next) => {
   const transaction = await sequelize.transaction();
@@ -98,17 +100,18 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     });
 
     if (!cart || cartItems.length === 0) {
-      return next(appError("The cart is empty or invalid", 404));
+      return next(new appError("The cart is empty or invalid", 404));
     }
 
-    const order = await createOrder(req.user, cart, transaction,req.body.addressInDetails);
+    const order = await createOrder(req.user, cart, transaction, req.body.addressInDetails, req.body.addressId);
     const orderItems = await createOrderItems(order, cartItems, transaction);
     const total = await calculateTotalCheckOut(orderItems);
-
+    order.total = total;
+    order.save({ transaction });
+    console.log(order)
     // Update order total and fetch the updated order details
     const orderState = await createOrderState(order.id, transaction);
 
-    await updateOrder(order.id, total, transaction);
     await Order.findByPk(order.id, { transaction });
     await deleteCartItems(cartItems, transaction);
     await createPayment(method, order.id, req.user, transaction);
@@ -123,7 +126,7 @@ exports.checkOut = catchAsync(async (req, res, next) => {
   } catch (err) {
     // If any error occurs, rollback the transaction
     await transaction.rollback();
-    next(new appError(err.message,400));
+    next(new appError(err.message, 400));
   }
 });
 
@@ -235,7 +238,6 @@ exports.getOrderState = catchAsync(async (req, res, next) => {
     data: orderState
   })
 })
-
 exports.getUserOrders = catchAsync(async (req, res, next) => {
   const orders = await Order.findAll({
     where: {
@@ -243,11 +245,13 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
     },
     include: [
       {
+        model : Address,
+      },
+      {
         model: OrderItem,
         include: [
           {
-            model: Product,
-            attributes: ['id', 'name', 'price'],
+            model: Product, 
           },
         ],
       },
@@ -255,13 +259,13 @@ exports.getUserOrders = catchAsync(async (req, res, next) => {
         model: OrderState,
       },
     ],
-  })
+  });
 
   res.status(200).json({
     status: "success",
     data: orders
-  })
-})
+  });
+});
 
 exports.recieveOrder = catchAsync(async (req, res, next) => {
   const orderId = req.params.orderId;
@@ -395,15 +399,36 @@ exports.deleteFromOrder = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.getOrdersAddressForUser = catchAsync(async (req, res, next) => {
+  const userId = req.user;
+  const user = await User.findByPk(userId);
+  if (!user) {
+    return next(new appError("There is no user with this id", 404));
+  }
+  const addresses = await Order.findAll({
+    where: {
+      user_id: userId
+    },
+    attributes: ['addressInDetails'],
+    include: {
+      model: Address,
+    }
+  })
+  res.status(200).json({
+    status: "success",
+    data: addresses
+  })
+})
+
 
 exports.getAllOrders = handlerFactory.getAll(Order)
 
 // functions 
-async function createOrder(userId, cart, transaction,addressInDetails) {
+async function createOrder(userId, cart, transaction, addressInDetails, addressId) {
   return Order.create(
     {
       user_id: userId,
-      address_id: cart.User.address_id,
+      address_id: addressId || cart.User.address_id,
       total: 0,
       addressInDetails
     },

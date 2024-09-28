@@ -1,6 +1,6 @@
-const User = require("../models/userModel");
-const Auth = require("../models/authModel");
 const catchAsync = require("../utils/catchAsync");
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client('473650472727-mhmsu3u8lcqd74v79gobgbb3sovj2u29.apps.googleusercontent.com');
 const sendEmail = require("../utils/sendEmail");
 const crypto = require("crypto");
 const appError = require("../utils/appError");
@@ -8,6 +8,11 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { promisify } = require("util");
 const sequelize = require("../sequelize")
+const { Auth,
+  User,
+  Cart
+} = require("../models/asc2.js")
+
 
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
@@ -38,13 +43,17 @@ const createAndSendToken = async (user, auth, statusCode, res) => {
   });
 };
 
-exports.signUp = (async (req, res, next) => {
+exports.signUp = catchAsync(async (req, res, next) => {
   var { user_name, email, password, address_id, phone_number } = req.body;
   let user_role = req.body.user_role || "user";
 
   const transaction = await sequelize.transaction();
   try {
     var user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
+    await Cart.create({
+      user_id: user.id
+    }, { transaction })
+
     var verificationToken = crypto.randomBytes(32).toString('hex');
     var auth = await Auth.create({
       user_id: user.id,
@@ -62,7 +71,7 @@ exports.signUp = (async (req, res, next) => {
     await transaction.rollback();
     return next(new appError(err.message, 400));
   }
-  
+
   try {
     const verificationLink = `localhost:1020/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
     const text = `Click the following link to verify your email: ${verificationLink}`;
@@ -136,8 +145,8 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
-  if (auth.isVerified){
-    return next(new appError("User is already verified",403))
+  if (auth.isVerified) {
+    return next(new appError("User is already verified", 403))
   }
   const verificationToken = crypto.randomBytes(32).toString('hex');
   auth.verificationToken = crypto
@@ -185,8 +194,8 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   const auth = user.Auth;
-  if (!auth.isVerified){
-    return next(new appError("Verify the email",403))
+  if (!auth.isVerified) {
+    return next(new appError("Verify the email", 403))
   }
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
 
@@ -255,7 +264,6 @@ exports.refreshToken = catchAsync(async (req, res, next) => {
 
 exports.protect = catchAsync(async (req, res, next) => {
   let token = req.headers?.authorization;
-
   if (!token || !token.startsWith("Bearer")) {
     return next(new appError("No token in Bearer auth!", 401));
   }
@@ -296,6 +304,31 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = decoded.id;
   next();
 });
+exports.optionalAuth = catchAsync(async (req, res, next) => {
+  let token = req.headers?.authorization;
+
+  if (token && token.startsWith("Bearer")) {
+    token = token.split(" ")[1];
+
+    try {
+      var decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+      const user = await User.findOne({
+        where: { id: decoded.id },
+        include: Auth,
+      });
+
+      if (user && user.Auth) {
+        req.user = decoded.id; // Set the user in the request if authenticated
+      }
+    } catch (err) {
+      // Token is invalid or can't be verified, ignore and continue as unauthenticated
+    }
+  }
+
+  next(); // Always proceed, even if user is not authenticated
+});
+
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
@@ -388,3 +421,42 @@ exports.allowedTo = (...roles) => {
   };
 };
 
+
+
+exports.googleSignin = async(req,res,next) => {
+  console.log(client)
+  const { token } = req.body;
+
+  try {
+    // Verify the Google token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: '473650472727-mhmsu3u8lcqd74v79gobgbb3sovj2u29.apps.googleusercontent.com',
+    });
+
+    const googleUser = ticket.getPayload();
+    console.log(googleUser);
+
+    // Find or create user in your database
+    let user = await findOrCreateUser(googleUser);
+    createAndSendToken(user,null,200,res)
+
+  }
+  catch(err){
+    res.send("error in OAuth2")
+  }
+}
+
+async function findOrCreateUser(googleUser) {
+  const { email, name } = googleUser;
+
+  // Find user in your database
+  let user = await User.findOne({ where: { email } });
+
+  // If no user exists, create a new one
+  if (!user) {
+    user = await User.create({ email, name });
+  }
+
+  return user;
+}

@@ -8,6 +8,24 @@ const swaggerUi = require("swagger-ui-express")
 const swaggerDocument = require("./swagger.json")
 const sequelize = require('./sequelize');
 
+const { Auth,
+  Cart,
+  CartItem,
+  Category,
+  Order,
+  OrderItem,
+  OrderState,
+  Product,
+  User,
+  UserFavorites,
+  Address,
+  ProductReview, Payment } = require("./models/asc2.js")
+
+// sequelize.sync({ force: false }).then(() => {
+//   console.log("Database & tables created!");
+// }).catch(error => {
+//   console.error('Unable to create tables, shutting down...', error);
+// });
 
 // security 
 const rateLimit = require('express-rate-limit');
@@ -24,16 +42,18 @@ const productRouter = require("./routes/productRouter")
 const cartRouter = require("./routes/cartRouter")
 const orderRouter = require("./routes/orderRouter")
 const reviewRouter = require("./routes/reviewRouter");
+const favoriteRouter = require("./routes/userFavoritesRouter.js");
 const appError = require("./utils/appError.js");
 
 const app = express();
+app.set('trust proxy', 1);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.use(cors())
 // Apply rate limiting middleware
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -47,7 +67,7 @@ app.use('/api/v1/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(cookieParser());
 
-app.use("/api/v1/addresses",addressRouter)
+app.use("/api/v1/addresses", addressRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/auths", authRouter)
 app.use("/api/v1/categories", categoryRouter)
@@ -55,6 +75,7 @@ app.use("/api/v1/products", productRouter)
 app.use("/api/v1/carts", cartRouter)
 app.use("/api/v1/orders", orderRouter)
 app.use("/api/v1/reviews", reviewRouter)
+app.use("/api/v1/favorites", favoriteRouter)
 
 
 app.all("*", (req, res, next) => {
@@ -67,7 +88,14 @@ app.use(errorController)
 // .then(() => {
 //   console.log('Database & tables created!');
 // });
-
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
+  
 app.listen(1020, () => {
   console.log("app Running on port 1020")
 })

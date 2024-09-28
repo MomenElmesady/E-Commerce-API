@@ -18,7 +18,6 @@ const CartItem = sequelize.define("CartItem", {
   timestamps: true
 })
 
-Product.hasMany(CartItem, { foreignKey: "product_id" })
-CartItem.belongsTo(Product, { foreignKey: "product_id" })
+
 
 module.exports = CartItem;
