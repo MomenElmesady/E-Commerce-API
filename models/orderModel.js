@@ -9,11 +9,11 @@ const Order = sequelize.define("Order", {
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  date: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-  },
+  // date: {
+  //   type: DataTypes.DATE,
+  //   allowNull: false,
+  //   defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+  // },
   user_id: {
     type: DataTypes.INTEGER
   },
