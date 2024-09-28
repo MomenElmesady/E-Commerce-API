@@ -9,11 +9,11 @@ const Payment = sequelize.define("Payment", {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  date: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
-  }, 
+  // date: {
+  //   type: DataTypes.DATE,
+  //   allowNull: false,
+  //   defaultValue: sequelize.literal('CURRENT_TIMESTAMP'),
+  // }, 
   order_id: {
     type: DataTypes.INTEGER
   },
