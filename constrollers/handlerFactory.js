@@ -21,7 +21,6 @@ exports.deleteOne = Model =>
 
 exports.getAll = Model =>
   catchAsync(async (req, res, next) => {
-    console.log("------------------------------")
     const data = await Model.findAll();
 
     res.status(200).json(
