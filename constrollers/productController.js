@@ -78,7 +78,7 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
   // Step 1: Get the total count of products matching the criteria
   const totalQuery = `
     SELECT COUNT(*) AS total
-    FROM products p
+    FROM Products p
     WHERE p.category_id = :categoryId
     AND p.price BETWEEN :minPrice AND :maxPrice
   `;
@@ -99,12 +99,12 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
         c.photo as category_photo,
         IF(:userId IS NOT NULL AND uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
     FROM 
-        products p
+        Products p
     LEFT JOIN 
-        userfavorites uf 
+        UserFavorites uf 
         ON :userId IS NOT NULL AND p.id = uf.product_id AND uf.user_id = :userId
     JOIN 
-        categories c 
+        Categories c 
         ON c.id = p.category_id
     WHERE 
         p.category_id = :categoryId
@@ -154,8 +154,8 @@ exports.searchInProducts = catchAsync(async (req, res, next) => {
       p.*,
       IF(:userId IS NOT NULL AND uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
     FROM
-      products p
-    LEFT JOIN userfavorites uf
+      Products p
+    LEFT JOIN UserFavorites uf
       ON :userId IS NOT NULL AND uf.user_id = :userId AND uf.product_id = p.id
     WHERE
       p.name LIKE :q
@@ -196,10 +196,10 @@ exports.getHomePageProducts = catchAsync(async (req, res, next) => {
       ROW_NUMBER() OVER (PARTITION BY p.category_id) AS rn,
       IF(:userId IS NOT NULL AND uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
   FROM
-      categories c
+      Categories c
   JOIN
-      products p ON p.category_id = c.id
-  LEFT JOIN userfavorites uf ON :userId IS NOT NULL AND uf.user_id = :userId AND uf.product_id = p.id
+      Products p ON p.category_id = c.id
+  LEFT JOIN UserFavorites uf ON :userId IS NOT NULL AND uf.user_id = :userId AND uf.product_id = p.id
   )
   SELECT *
   FROM RankedProducts
@@ -241,7 +241,7 @@ exports.getProduct = catchAsync(async (req, res, next) => {
 
   const query = 
   `select p.*, IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
-from products p LEFT JOIN userfavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
+from Products p LEFT JOIN UserFavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
 where p.id = :productId`;
 ;
 

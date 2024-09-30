@@ -119,10 +119,10 @@ exports.showCart = catchAsync(async (req, res, next) => {
            p.id as product_id, p.name as product_name, p.description as product_description, p.price, p.category_id,
            p.photo, p.createdAt as product_createdAt, p.updatedAt as product_updatedAt,
            IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
-    FROM carts c
-    JOIN cartitems ci ON c.id = ci.cart_id
-    JOIN products p ON p.id = ci.product_id
-    LEFT JOIN userfavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
+    FROM Carts c
+    JOIN CartItems ci ON c.id = ci.cart_id
+    JOIN Products p ON p.id = ci.product_id
+    LEFT JOIN UserFavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
     WHERE c.user_id = :userId
   `;
 
