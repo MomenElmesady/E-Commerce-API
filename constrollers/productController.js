@@ -13,7 +13,7 @@ const {
   User,
   Category,
   CartItem,
-  Cart} = require("../models/asc2.js")
+  Cart } = require("../models/asc2.js")
 
 // for AI analyses
 exports.getProductsForUser = catchAsync(async (req, res, next) => {
@@ -88,7 +88,7 @@ exports.getProductsOfCategory = catchAsync(async (req, res, next) => {
     type: sequelize.QueryTypes.SELECT
   });
 
-  const totalProducts = totalResult[0].total; 
+  const totalProducts = totalResult[0].total;
   const totalPages = Math.ceil(totalProducts / limit);
 
   // Step 2: Fetch paginated products
@@ -187,22 +187,26 @@ exports.searchInProducts = catchAsync(async (req, res, next) => {
 exports.getHomePageProducts = catchAsync(async (req, res, next) => {
   const userId = req.user || null; // If user is not logged in, set userId to null
 
-  const query = 
-  `WITH RankedProducts AS (
-  SELECT
-      p.*,
-      c.name AS category_name,
-      c.photo as category_photo,
-      ROW_NUMBER() OVER (PARTITION BY p.category_id) AS rn,
-      IF(:userId IS NOT NULL AND uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
-  FROM
-      Categories c
-  JOIN
-      Products p ON p.category_id = c.id
-  LEFT JOIN UserFavorites uf ON :userId IS NOT NULL AND uf.user_id = :userId AND uf.product_id = p.id
-  )
-  SELECT *
-  FROM RankedProducts
+  // Query to fetch products with a limit of 5 per category
+  const query =
+    `SELECT * FROM (
+      SELECT
+          p.*,
+          c.name AS category_name,
+          c.photo AS category_photo,
+          IF(:userId IS NOT NULL AND uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite,
+          @rn := IF(@prev_cat = p.category_id, @rn + 1, 1) AS rn,
+          @prev_cat := p.category_id
+      FROM
+          (SELECT @rn := 0, @prev_cat := NULL) vars,
+          Categories c
+      JOIN
+          Products p ON p.category_id = c.id
+      LEFT JOIN 
+          UserFavorites uf ON :userId IS NOT NULL AND uf.user_id = :userId AND uf.product_id = p.id
+      ORDER BY
+          p.category_id, p.id
+  ) AS RankedProducts
   WHERE rn <= 5`;
 
   const results = await sequelize.query(query, {
@@ -214,7 +218,10 @@ exports.getHomePageProducts = catchAsync(async (req, res, next) => {
   const groupedResults = results.reduce((acc, product) => {
     const { category_name, category_id, category_photo, ...productData } = product;
 
+    // Check if this category already exists in the accumulator
     let category = acc.find(cat => cat.category_id === category_id);
+
+    // If category does not exist, create it
     if (!category) {
       category = {
         category_name,
@@ -225,10 +232,12 @@ exports.getHomePageProducts = catchAsync(async (req, res, next) => {
       acc.push(category);
     }
 
+    // Add the product to the respective category
     category.products.push(productData);
     return acc;
   }, []);
 
+  // Return grouped results as JSON
   res.status(200).json({
     status: "success",
     data: groupedResults
@@ -236,18 +245,19 @@ exports.getHomePageProducts = catchAsync(async (req, res, next) => {
 });
 
 
-exports.getProduct = catchAsync(async (req, res, next) => {
-  const userId = req.user; 
 
-  const query = 
-  `select p.*, IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
+exports.getProduct = catchAsync(async (req, res, next) => {
+  const userId = req.user;
+
+  const query =
+    `select p.*, IF(uf.user_id IS NOT NULL, TRUE, FALSE) AS is_favorite
 from Products p LEFT JOIN UserFavorites uf ON uf.user_id = :userId AND uf.product_id = p.id 
 where p.id = :productId`;
-;
+  ;
 
   const results = await sequelize.query(query, {
     type: QueryTypes.SELECT,
-    replacements: { userId: +userId, productId: +req.params.id }, 
+    replacements: { userId: +userId, productId: +req.params.id },
   });
 
   res.status(200).json({
@@ -258,18 +268,18 @@ where p.id = :productId`;
 });
 
 exports.checkProductInCart = catchAsync(async (req, res, next) => {
-  const userId = req.user; 
+  const userId = req.user;
   const productId = req.params.productId;
-  const cart = await Cart.findOne({where: {user_id: userId}});
-  if (!cart){
+  const cart = await Cart.findOne({ where: { user_id: userId } });
+  if (!cart) {
     return res.status(200).json({
       status: "fail",
       message: 'cant find cart for this user'
     });
   }
-  const cartItem = await CartItem.findOne({where: {cart_id: cart.id, product_id: productId}});
+  const cartItem = await CartItem.findOne({ where: { cart_id: cart.id, product_id: productId } });
   let data = false;
-  if (cartItem){
+  if (cartItem) {
     data = true;
   }
   return res.status(200).json({
