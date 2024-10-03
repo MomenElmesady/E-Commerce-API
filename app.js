@@ -65,7 +65,7 @@ app.use(xss());
 app.use(express.json());
 console.log(__dirname);
 
-app.use('/api/v1/uploads', express.static(path.resolve(__dirname, 'uploads')));
+app.use('/api/v1/uploads', express.static(path.resolve("/opt/render/project/src/", 'uploads')));
 
 app.use(cookieParser());
 
