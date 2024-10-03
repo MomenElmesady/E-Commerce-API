@@ -63,7 +63,9 @@ app.use(hpp());
 app.use(xss());
 
 app.use(express.json());
-app.use('/api/v1/uploads', express.static(path.join(__dirname, 'uploads')));
+console.log(__dirname);
+
+app.use('/api/v1/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
 app.use(cookieParser());
 
