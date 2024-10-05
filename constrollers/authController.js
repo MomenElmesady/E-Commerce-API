@@ -74,12 +74,43 @@ exports.signUp = catchAsync(async (req, res, next) => {
 
   try {
     const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
-    const text = `Click the following link to verify your email: ${verificationLink}`;
-    // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
+
+    // Define the HTML content for the email
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+          <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #4CAF50;">Welcome to Our E-Commerce Platform!</h2>
+            <p>Hi,</p>
+            <p>Thank you for registering with us. Please click the button below to verify your email address. This verification link is valid for 10 minutes.</p>
+            
+            <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">
+              Verify Email
+            </a>
+            
+            <p>If the button above doesn't work, copy and paste the following link into your browser:</p>
+            <p><a href="${verificationLink}" style="color: #4CAF50;">${verificationLink}</a></p>
+            
+            <hr style="border: 1px solid #f0f0f0; margin-top: 20px;">
+            <p style="font-size: 12px; color: #888;">If you did not create an account, please ignore this email.</p>
+            <p style="font-size: 12px; color: #888;">&copy; 2024 E-Commerce Platform. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Send the email
+    await sendEmail({
+      email: user.email,
+      subject: 'Verify your email (for 10 minutes)',
+      html: htmlContent,  // Use the HTML content here
+    });
+
     res.status(200).json({
       status: "success",
-      link: verificationLink,
+      message: 'Verification email sent successfully.',
     });
+
   } catch (err) {
     auth.verificationToken = null;
     await auth.save();
@@ -92,7 +123,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
 });
 
 exports.verify = catchAsync(async (req, res, next) => {
-  // Extract the token from the request parameters
+  // Extract the token and email from the query parameters
   const { token, email } = req.query;
 
   // Find the user by email and include the Auth model
@@ -128,9 +159,49 @@ exports.verify = catchAsync(async (req, res, next) => {
   // Save the auth model
   await auth.save();
 
-  // Create and send the token
-  createAndSendToken(user, auth, 200, res);
+  // Create the HTML response
+  const htmlResponse = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Email Verified</title>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f4f4f4;
+                  text-align: center;
+                  padding: 50px;
+              }
+              h1 {
+                  color: #4CAF50;
+              }
+              p {
+                  color: #555;
+              }
+              .button {
+                  display: inline-block;
+                  padding: 10px 20px;
+                  margin-top: 20px;
+                  background-color: #4CAF50;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 5px;
+              }
+          </style>
+      </head>
+      <body>
+          <h1>Email Verified Successfully!</h1>
+          <p>Thank you for verifying your email. You can now return to the app.</p>
+      </body>
+      </html>
+  `;
+
+  // Send the HTML response
+  res.status(200).send(htmlResponse);
 });
+
 
 exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
@@ -157,12 +228,42 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${req.body?.email}`;
-    const text = `Click the following link to verify your email: ${verificationLink}`;
-    // await sendEmail({ email: user.email, subject: `Verify your email (for 10 minutes)`, text });
+    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
+
+    // Define the HTML content for the email
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+          <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #4CAF50;">Welcome to Our E-Commerce Platform!</h2>
+            <p>Hi,</p>
+            <p>Thank you for registering with us. Please click the button below to verify your email address. This verification link is valid for 10 minutes.</p>
+            
+            <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0;">
+              Verify Email
+            </a>
+            
+            <p>If the button above doesn't work, copy and paste the following link into your browser:</p>
+            <p><a href="${verificationLink}" style="color: #4CAF50;">${verificationLink}</a></p>
+            
+            <hr style="border: 1px solid #f0f0f0; margin-top: 20px;">
+            <p style="font-size: 12px; color: #888;">If you did not create an account, please ignore this email.</p>
+            <p style="font-size: 12px; color: #888;">&copy; 2024 E-Commerce Platform. All rights reserved.</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Send the email
+    await sendEmail({
+      email: user.email,
+      subject: 'Verify your email (for 10 minutes)',
+      html: htmlContent,  // Use the HTML content here
+    });
+
     res.status(200).json({
       status: "success",
-      link: verificationLink
+      message: 'Verification email sent successfully.',
     });
   } catch (err) {
     auth.verificationToken = null;
@@ -177,35 +278,35 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  
+
   if (!email || !password) {
     return next(new appError("Must provide email and password", 400));
   }
-  
-  
+
+
   const user = await User.findOne({
     where: {
       email,
     },
     include: Auth,
   });
-  
+
   if (!user) {
     return next(new appError("Incorrect Email or Password", 404));
   }
-  
-  
+
+
   const auth = user.Auth;
   if (!auth.isVerified) {
     return next(new appError("Verify the email", 403))
   }
   const isPasswordMatch = await bcrypt.compare(password, auth.password);
-  
+
   if (!isPasswordMatch) {
     return next(new appError("Incorrect Email or Password", 401));
   }
-  
-  
+
+
   createAndSendToken(user, auth, 200, res);
 });
 
@@ -412,6 +513,33 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   createAndSendToken(user, auth, 200, res);
 });
 
+exports.isVerified = catchAsync(async (req, res, next) => {
+  const user = await User.findOne({
+    where: {
+      email: req.body.email,
+    },
+    include: Auth,
+  });
+
+  if (!user) {
+    return next(new appError("No user found with this email", 404));
+  }
+
+  const auth = user.Auth;
+
+  if (!auth) {
+    return next(new appError("No auth found for this user", 404));
+  }
+
+  if (!auth.isVerified) {
+    return next(new appError("User is not verified", 403));
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "User is verified",
+  });
+});
 exports.allowedTo = (...roles) => {
   return async (req, res, next) => {
     const user = await User.findByPk(req.user);
@@ -426,7 +554,7 @@ exports.allowedTo = (...roles) => {
 
 
 
-exports.googleSignin = async(req,res,next) => {
+exports.googleSignin = async (req, res, next) => {
   console.log(client)
   const { token } = req.body;
 
@@ -442,10 +570,10 @@ exports.googleSignin = async(req,res,next) => {
 
     // Find or create user in your database
     let user = await findOrCreateUser(googleUser);
-    createAndSendToken(user,null,200,res)
+    createAndSendToken(user, null, 200, res)
 
   }
-  catch(err){
+  catch (err) {
     res.send("error in OAuth2")
   }
 }
@@ -461,5 +589,5 @@ async function findOrCreateUser(googleUser) {
     user = await User.create({ email, name });
   }
 
-  return user;
+  return user;
 }
