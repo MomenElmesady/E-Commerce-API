@@ -9,6 +9,9 @@ router.post("/forgotPassword", authController.forgotPassword)
 router.patch("/resetPassword/:token", authController.resetPassword)
 router.get("/refreshToken", authController.refreshToken)
 router.post("/isVerified", authController.isVerified)
+router.post('/google-signin',authController.googleSignin)
+
+
 
 router.post("/logOut",authController.protect,authController.logout)
 
