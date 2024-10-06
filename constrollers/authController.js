@@ -214,10 +214,8 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new appError("Cannot find user with this email", 404));
   }
-  const auth = Auth.findOne({
-    where: {
-      user_id: user.id,
-    }});
+  const auth = user.Auth;
+  console.log(auth.isVerified)
   if (auth.isVerified) {
     return next(new appError("User is already verified", 403))
   }
@@ -226,7 +224,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
     .createHash('sha256')
     .update(verificationToken)
     .digest('hex');
-
+  console.log(auth)
   await auth.save();
 
   try {
