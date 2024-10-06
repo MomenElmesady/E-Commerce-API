@@ -8,11 +8,10 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { promisify } = require("util");
 const sequelize = require("../sequelize")
-const { Auth,
-  User,
+const {
   Cart
 } = require("../models/asc2.js")
-
+const { User, Auth } = require("../models/asc2.js");
 
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
@@ -214,8 +213,11 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   if (!user) {
     return next(new appError("Cannot find user with this email", 404));
   }
-
-  const auth = user.Auth;
+  const auth = Auth.findOne({
+    where: {
+      user_id: user.id,
+    }});
+  console.log(auth)
   if (auth.isVerified) {
     return next(new appError("User is already verified", 403))
   }
@@ -228,7 +230,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
   await auth.save();
 
   try {
-    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${email}`;
+    const verificationLink = `https://e-commerce-api-jwe4.onrender.com/api/v1/auths/verify?token=${verificationToken}&email=${user.email}`;
 
     // Define the HTML content for the email
     const htmlContent = `
@@ -255,6 +257,7 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
     `;
 
     // Send the email
+    console.log(user.email)
     await sendEmail({
       email: user.email,
       subject: 'Verify your email (for 10 minutes)',
