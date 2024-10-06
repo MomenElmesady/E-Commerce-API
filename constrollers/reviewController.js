@@ -2,13 +2,21 @@ const catchAsync = require("../utils/catchAsync");
 const appError = require("../utils/appError");
 const sequelize = require("../sequelize");
 const handlerFactory = require("./handlerFactory");
-const {
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
-  Review
-} = require("../models/asc2.js")
+
+// const {
+//   Order,
+//   OrderItem,
+//   OrderState,
+//   Product,
+//   Review
+// } = require("../models/asc2.js")
+
+const OrderItem = require("../models/orderItemModel");
+const Order = require("../models/orderModel");
+const Product = require("../models/productModel");
+const Review = require("../models/productReviewModel");
+const User = require("../models/userModel");
+const OrderState = require("../models/orderStateModel.js");
 
 exports.updateReview = catchAsync(async (req, res, next) => {
   // Validate rate range

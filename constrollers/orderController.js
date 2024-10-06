@@ -1,16 +1,27 @@
 const appError = require("../utils/appError")
 const catchAsync = require("../utils/catchAsync")
 const handlerFactory = require("./handlerFactory")
-const {
-  Cart,
-  CartItem,
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
-  User,
-  Payment, 
-  Address} = require("../models/asc2.js")
+// const {
+//   Cart,
+//   CartItem,
+//   Order,
+//   OrderItem,
+//   OrderState,
+//   Product,
+//   User,
+//   Payment, 
+//   Address} = require("../models/asc2.js")
+
+const Cart = require("../models/cartModel");
+const CartItem = require("../models/cartItemModel");
+const Product = require("../models/productModel");
+const User = require("../models/userModel");
+const Order = require("../models/orderModel");
+const OrderItem = require("../models/orderItemModel");
+const OrderState = require("../models/orderStateModel");
+const Payment = require("../models/paymentModel");
+const Address = require("../models/addressModel");
+
 
 const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY)
 
@@ -108,7 +119,6 @@ exports.checkOut = catchAsync(async (req, res, next) => {
     const total = await calculateTotalCheckOut(orderItems);
     order.total = total;
     order.save({ transaction });
-    console.log(order)
     // Update order total and fetch the updated order details
     const orderState = await createOrderState(order.id, transaction);
 

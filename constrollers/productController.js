@@ -6,14 +6,16 @@ const appError = require("../utils/appError");
 const { Sequelize, QueryTypes } = require('sequelize');
 
 
-const {
-  Order,
-  OrderItem,
-  Product,
-  User,
-  Category,
-  CartItem,
-  Cart } = require("../models/asc2.js")
+
+
+const Order = require("../models/orderModel.js")
+const OrderItem = require("../models/orderItemModel.js")
+const Product = require("../models/productModel.js")
+const User = require("../models/userModel.js")
+const Category = require("../models/categoryModel.js")
+const CartItem = require("../models/cartItemModel.js")
+const Cart = require("../models/cartModel.js")
+
 
 // for AI analyses
 exports.getProductsForUser = catchAsync(async (req, res, next) => {

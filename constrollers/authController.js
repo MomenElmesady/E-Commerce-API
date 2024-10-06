@@ -11,8 +11,9 @@ const sequelize = require("../sequelize")
 const {
   Cart
 } = require("../models/asc2.js")
-const { User, Auth } = require("../models/asc2.js");
-
+// const { User, Auth } = require("../models/asc2.js");
+const Auth = require("../models/authModel");
+const User = require("../models/userModel");
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
 };
@@ -217,7 +218,6 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
     where: {
       user_id: user.id,
     }});
-  console.log(auth)
   if (auth.isVerified) {
     return next(new appError("User is already verified", 403))
   }
@@ -257,7 +257,6 @@ exports.sendVerificationToken = catchAsync(async (req, res, next) => {
     `;
 
     // Send the email
-    console.log(user.email)
     await sendEmail({
       email: user.email,
       subject: 'Verify your email (for 10 minutes)',
@@ -558,7 +557,6 @@ exports.allowedTo = (...roles) => {
 
 
 exports.googleSignin = async (req, res, next) => {
-  console.log(client)
   const { token } = req.body;
 
   try {
@@ -569,7 +567,6 @@ exports.googleSignin = async (req, res, next) => {
     });
 
     const googleUser = ticket.getPayload();
-    console.log(googleUser);
 
     // Find or create user in your database
     let user = await findOrCreateUser(googleUser);

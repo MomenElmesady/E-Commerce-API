@@ -1,10 +1,13 @@
 const catchAsync = require("../utils/catchAsync");
 const appError = require("../utils/appError");
 
-const {
-  Product,
-  User,
-  UserFavorites} = require("../models/asc2.js")
+// const {
+//   Product,
+//   User,
+//   UserFavorites} = require("../models/asc2.js")
+const Product = require("../models/productModel")
+const User = require("../models/userModel")
+const UserFavorites = require("../models/userFavorites")
 
 exports.getUserFavorites = catchAsync(async (req, res, next) => {
   const products = await Product.findAll({

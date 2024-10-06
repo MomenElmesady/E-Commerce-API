@@ -5,11 +5,17 @@ const { QueryTypes } = require('sequelize');
 const sequelize = require("../sequelize");
 
 
-const {
-  Cart,
-  CartItem,
-  Product,
-  User } = require("../models/asc2.js")
+// const {
+//   Cart,
+//   CartItem,
+//   Product,
+//   User } = require("../models/asc2.js")
+
+  const Cart = require("../models/cartModel");
+  const CartItem = require("../models/cartItemModel");
+  const Product = require("../models/productModel");
+  const User = require("../models/userModel");
+
 
 exports.addToCart = catchAsync(async (req, res, next) => {
   const cart = await Cart.findOne({

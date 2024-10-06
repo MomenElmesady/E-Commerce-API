@@ -8,19 +8,20 @@ const swaggerUi = require("swagger-ui-express")
 const swaggerDocument = require("./swagger.json")
 const sequelize = require('./sequelize');
 
-const { Auth,
-  Cart,
-  CartItem,
-  Category,
-  Order,
-  OrderItem,
-  OrderState,
-  Product,
-  User,
-  UserFavorites,
-  Address,
-  ProductReview, Payment } = require("./models/asc2.js")
-
+// const { Auth,
+//   Cart,
+//   CartItem,
+//   Category,
+//   Order,
+//   OrderItem,
+//   OrderState,
+//   Product,
+//   User,
+//   UserFavorites,
+//   Address,
+//   ProductReview, Payment } = require("./models/asc2.js")
+const defineAssociations = require("./models/asc2.js")
+defineAssociations();
 // sequelize.sync({ force: false }).then(() => {
 //   console.log("Database & tables created!");
 // }).catch(error => {

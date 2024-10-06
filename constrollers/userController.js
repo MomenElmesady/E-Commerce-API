@@ -4,9 +4,13 @@ const sendEmail = require("../utils/sendEmail");
 const catchAsync = require("../utils/catchAsync");
 const handlerFactory = require("./handlerFactory");
 
-const { Auth,
-  User,
-} = require("../models/asc2.js")
+// const { Auth,
+//   User,
+// } = require("../models/asc2.js")
+
+const User = require("../models/userModel");
+const Auth = require("../models/authModel");
+const Address = require("../models/addressModel");
 
 
 exports.getUsersInAddress = catchAsync(async (req, res, next) => {
