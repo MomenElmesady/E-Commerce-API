@@ -8,11 +8,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { promisify } = require("util");
 const sequelize = require("../sequelize")
-const {
-  Cart
-} = require("../models/asc2.js")
+// const {
+//   Cart
+// } = require("../models/asc2.js")
 // const { User, Auth } = require("../models/asc2.js");
 const Auth = require("../models/authModel");
+const Cart = require("../models/cartModel");
 const User = require("../models/userModel");
 const createToken = async (id, expiresIn) => {
   return await jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn });
@@ -46,9 +47,11 @@ const createAndSendToken = async (user, auth, statusCode, res) => {
 exports.signUp = catchAsync(async (req, res, next) => {
   var { user_name, email, password, address_id, phone_number } = req.body;
   let user_role = req.body.user_role || "user";
-
+  
   const transaction = await sequelize.transaction();
   try {
+    console.log(User)
+    console.log(Auth)
     var user = await User.create({ user_name, email, user_role, address_id, phone_number }, { transaction });
     await Cart.create({
       user_id: user.id
